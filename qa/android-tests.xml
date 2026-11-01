@@ -1,8 +1,9 @@
 <?xml version='1.0' encoding='utf-8'?>
-<testsuite name="Fleur emulator UI and persistence" tests="10" failures="0" errors="0" skipped="0">
+<testsuite name="Fleur Android instrumentation" tests="11" failures="0" errors="0" skipped="0">
   <testcase classname="com.abdellatif.fleur.BudgetPersistenceTest" name="durableRoundTripAndInvalidRestoreCannotReplaceExistingBudget" />
   <testcase classname="com.abdellatif.fleur.BudgetWidgetTest" name="boundWidgetShowsDebtTransferAndHidesAmountsWhenLocked" />
   <testcase classname="com.abdellatif.fleur.BudgetWorkflowTest" name="monthlyRecurringTransactionCanBeCreatedAndDeletedAsASeries" />
+  <testcase classname="com.abdellatif.fleur.BudgetWorkflowTest" name="centeredAccountNameInputSavesInBothThemes" />
   <testcase classname="com.abdellatif.fleur.BudgetWorkflowTest" name="savingsAccountAndTransferPreserveCombinedBalance" />
   <testcase classname="com.abdellatif.fleur.BudgetWorkflowTest" name="referenceScreensAndSettingsRenderWithRealAccounting" />
   <testcase classname="com.abdellatif.fleur.BudgetWorkflowTest" name="customCategoryCanChooseIconColorBeRenamedAndDeleted" />

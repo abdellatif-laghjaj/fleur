@@ -239,13 +239,13 @@ private fun BudgetContent(
                 } else SmallIconButton("settings", "Open settings", { open("settings") })
             }
             if (tab == 2 && searchVisible)
-                OutlinedTextField(
+                FleurInput(
                     query,
                     { query = it },
-                    placeholder = { Text("Search transactions", fontSize = 12.sp) },
-                    singleLine = true,
+                    label = "Search transactions",
+                    showLabel = false,
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp),
-                    trailingIcon = {
+                    trailing = {
                         SmallIconButton(
                             "close",
                             "Clear search",

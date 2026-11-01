@@ -112,29 +112,18 @@ fun TextInputDialog(
             }
         },
     ) {
-        BasicTextField(
+        FleurInput(
             value,
             { value = it },
-            singleLine = true,
+            label = title,
+            showLabel = false,
+            modifier = Modifier.fillMaxWidth(),
             keyboardOptions =
                 KeyboardOptions(
                     keyboardType = if (numeric) KeyboardType.Decimal else KeyboardType.Text,
                 ),
-            modifier =
-                Modifier.fillMaxWidth()
-                    .background(
-                        MaterialTheme.colorScheme.onSurface.copy(alpha = .06f),
-                        androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
-                    )
-                    .padding(12.dp)
-                    .semantics { contentDescription = title },
-            textStyle =
-                MaterialTheme.typography.bodyLarge.copy(
-                    color = MaterialTheme.colorScheme.onSurface,
-                ),
-            cursorBrush =
-                androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.primary),
         )
+
         if (error != null)
             Text(
                 error!!,
@@ -312,6 +301,8 @@ fun TransactionEditor(
                             )
                         inner()
                     },
+                    cursorBrush =
+                        androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.primary),
                 )
             }
             if (error != null)
@@ -370,6 +361,8 @@ fun TransactionEditor(
                         Text("Notes", color = MaterialTheme.colorScheme.outline, fontSize = 13.sp)
                     inner()
                 },
+                cursorBrush =
+                    androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.primary),
             )
             if (editing != null)
                 TextButton(
@@ -490,11 +483,11 @@ fun RepeatEditor(
                 chooseFrequency = true
             }
             if (frequency != Frequency.NONE) {
-                OutlinedTextField(
+                FleurInput(
                     interval,
                     { interval = it },
-                    label = { Text("Every") },
-                    suffix = {
+                    label = "Every",
+                    trailing = {
                         Text(
                             when (frequency) {
                                 Frequency.DAILY -> "day(s)"
@@ -506,7 +499,6 @@ fun RepeatEditor(
                         )
                     },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    singleLine = true,
                     modifier = Modifier.fillMaxWidth().padding(vertical = 15.dp),
                 )
                 if (frequency in listOf(Frequency.WEEKLY, Frequency.FORTNIGHTLY)) {
@@ -606,6 +598,8 @@ fun CategoryPicker(
                         Text("Search", fontSize = 12.sp, color = MaterialTheme.colorScheme.outline)
                     inner()
                 },
+                cursorBrush =
+                    androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.primary),
             )
         }
         LazyVerticalGrid(
@@ -767,11 +761,11 @@ fun IconPicker(onSelect: (String) -> Unit, onClose: () -> Unit) {
     var search by rememberSaveable { mutableStateOf("") }
     PaperDialog(onClose) {
         SheetTopBar("Choose an icon", onClose)
-        OutlinedTextField(
+        FleurInput(
             search,
             { search = it },
-            placeholder = { Text("Search icons") },
-            singleLine = true,
+            label = "Search icons",
+            showLabel = false,
             modifier = Modifier.fillMaxWidth().padding(20.dp),
         )
         LazyVerticalGrid(
@@ -836,12 +830,16 @@ fun CategoryEditor(
             ) {
                 CategoryBadge(icon, color, size = 58.dp)
             }
-            OutlinedTextField(
+            FleurInput(
                 name,
                 { if (it.length <= 100) name = it },
-                label = { Text("Name") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth().padding(bottom = 14.dp),
+                label = "Name",
+                centered = true,
+                showLabel = false,
+                modifier =
+                    Modifier.align(Alignment.CenterHorizontally)
+                        .fillMaxWidth(.6f)
+                        .padding(bottom = 24.dp),
             )
             FormRow("Type", type.name.lowercase().replaceFirstChar { it.uppercase() }) {
                 picker = "type"
@@ -1053,41 +1051,34 @@ fun AccountEditor(
         Column(
             Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 24.dp),
         ) {
-            Box(
-                Modifier.fillMaxWidth().padding(vertical = 20.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                CategoryBadge(icon, color, size = 54.dp)
-            }
-            OutlinedTextField(
+            FleurInput(
                 name,
                 { if (it.length <= 100) name = it },
-                label = { Text("Name") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+                label = "Name",
+                centered = true,
+                showLabel = false,
+                modifier =
+                    Modifier.align(Alignment.CenterHorizontally)
+                        .fillMaxWidth(.6f)
+                        .padding(top = 30.dp, bottom = 28.dp),
             )
             FormRow("Account type", type.name.lowercase().replaceFirstChar { it.uppercase() }) {
                 picker = "type"
             }
-            OutlinedTextField(
+            FleurInput(
                 initial,
                 { initial = it },
-                label = {
-                    Text(
-                        if (type == AccountType.DEBT && account == null) "Initial debt amount"
-                        else "Initial balance",
-                    )
-                },
-                singleLine = true,
+                label =
+                    if (type == AccountType.DEBT && account == null) "Initial debt amount"
+                    else "Initial balance",
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
             )
             if (type != AccountType.SPENDING)
-                OutlinedTextField(
+                FleurInput(
                     goal,
                     { goal = it },
-                    label = { Text(if (type == AccountType.DEBT) "Debt limit" else "Goal amount") },
-                    singleLine = true,
+                    label = if (type == AccountType.DEBT) "Debt limit" else "Goal amount",
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
                 )
@@ -1298,12 +1289,11 @@ fun BudgetEditor(state: BudgetState, vm: BudgetViewModel, onClose: () -> Unit) {
                     color = MaterialTheme.colorScheme.outline,
                     modifier = Modifier.padding(bottom = 20.dp),
                 )
-                OutlinedTextField(
+                FleurInput(
                     overall,
                     { overall = it },
-                    label = { Text("Overall budget") },
+                    label = "Overall budget",
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    singleLine = true,
                     modifier = Modifier.fillMaxWidth().padding(bottom = 20.dp),
                 )
             }
@@ -1326,13 +1316,13 @@ fun BudgetEditor(state: BudgetState, vm: BudgetViewModel, onClose: () -> Unit) {
                 ) {
                     CategoryBadge(c.icon, c.color)
                     Text(c.name, Modifier.weight(1f).padding(horizontal = 12.dp), fontSize = 13.sp)
-                    OutlinedTextField(
+                    FleurInput(
                         limits[c.id] ?: "0",
                         { limits[c.id] = it },
-                        singleLine = true,
+                        label = "${c.name} budget",
+                        showLabel = false,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         modifier = Modifier.width(115.dp),
-                        textStyle = TextStyle(fontSize = 13.sp),
                     )
                 }
             }

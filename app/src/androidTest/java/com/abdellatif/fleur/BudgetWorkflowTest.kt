@@ -62,7 +62,9 @@ class BudgetWorkflowTest {
         assertEquals(47470L, vm.state.value!!.accountBalance("default"))
         compose.onNodeWithContentDescription("Transactions").performClick()
         compose.onNodeWithContentDescription("Search transactions").performClick()
-        compose.onNodeWithText("Search transactions").performTextInput("Weekly market")
+        compose
+            .onNode(hasContentDescription("Search transactions") and hasSetTextAction())
+            .performTextInput("Weekly market")
         compose.onNode(hasText("Weekly market") and hasSetTextAction().not()).assertIsDisplayed()
         compose.onNodeWithText("November paycheck").assertDoesNotExist()
         compose.onNodeWithContentDescription("Clear search").performClick()
@@ -83,6 +85,43 @@ class BudgetWorkflowTest {
         compose.onNodeWithText("Delete transaction").performScrollTo().performClick()
         compose.onNodeWithText("Delete", useUnmergedTree = true).performClick()
         compose.waitUntil(10000) { vm.state.value!!.entries.size == 1 }
+    }
+
+    @Test
+    fun centeredAccountNameInputSavesInBothThemes() {
+        compose.runOnIdle {
+            vm.change { seed ->
+                seed.copy(
+                    accounts = seed.accounts.map { it.copy(initial = 3456) },
+                    preferences = seed.preferences.copy(darkMode = "Light"),
+                )
+            }
+        }
+        compose.waitUntil(10000) { vm.state.value!!.preferences.darkMode == "Light" }
+        compose.onNodeWithContentDescription("Accounts").performClick()
+        compose.onNodeWithText("Cash").performClick()
+        compose.onNodeWithText("Edit Account").performClick()
+        val name = compose.onNodeWithContentDescription("Name")
+        assertTrue(
+            name.fetchSemanticsNode().size.width <
+                application.resources.displayMetrics.widthPixels * .7f,
+        )
+        name.performTextReplacement("Main")
+        name.performImeAction()
+        screenshot("18-account-input-light.png")
+        assertEquals("Cash", vm.state.value!!.accounts.single().name)
+        compose.onNodeWithText("Save").performClick()
+        compose.waitUntil(10000) { vm.state.value!!.accounts.single().name == "Main" }
+        compose.onNodeWithText("Main").performClick()
+        compose.onNodeWithText("Edit Account").performClick()
+        compose.runOnIdle { vm.preferences { it.copy(darkMode = "Dark") } }
+        compose.waitUntil(10000) { vm.state.value!!.preferences.darkMode == "Dark" }
+        compose.onNodeWithContentDescription("Name").performTextReplacement("Main wallet")
+        compose.onNodeWithContentDescription("Name").performImeAction()
+        screenshot("19-account-input-dark.png")
+        compose.onNodeWithText("Save").performClick()
+        compose.waitUntil(10000) { vm.state.value!!.accounts.single().name == "Main wallet" }
+        assertEquals(3456L, vm.state.value!!.accountBalance("default"))
     }
 
     @Test
@@ -189,13 +228,13 @@ class BudgetWorkflowTest {
     fun savingsAccountAndTransferPreserveCombinedBalance() {
         compose.onNodeWithContentDescription("Accounts").performClick()
         compose.onNodeWithText("+  Create new account").performClick()
-        compose.onNodeWithText("Name").performTextInput("Savings")
+        compose.onNodeWithContentDescription("Name").performTextInput("Savings")
         compose.onNodeWithText("Account type").performClick()
         compose
             .onNode(hasText("Savings") and hasSetTextAction().not(), useUnmergedTree = true)
             .performClick()
-        compose.onNodeWithText("Initial balance").performTextReplacement("100")
-        compose.onNodeWithText("Goal amount").performTextReplacement("1000")
+        compose.onNodeWithContentDescription("Initial balance").performTextReplacement("100")
+        compose.onNodeWithContentDescription("Goal amount").performTextReplacement("1000")
         compose.onNodeWithText("Save").performClick()
         compose.waitUntil(10000) { vm.state.value!!.accounts.size == 2 }
         compose.onNodeWithContentDescription("Home").performClick()
@@ -227,9 +266,9 @@ class BudgetWorkflowTest {
         compose.onNodeWithContentDescription("Open settings").performClick()
         compose.onNodeWithText("Categories").performClick()
         compose.onNodeWithText("+ New").performClick()
-        compose.onNodeWithText("Name").performTextInput("Books")
+        compose.onNodeWithContentDescription("Name").performTextInput("Books")
         compose.onNodeWithContentDescription("Choose icon").performClick()
-        compose.onNodeWithText("Search icons").performTextInput("book")
+        compose.onNodeWithContentDescription("Search icons").performTextInput("book")
         compose.onNodeWithContentDescription("Book").performClick()
         compose.onNodeWithText("Color", useUnmergedTree = true).performClick()
         screenshot("15-color-picker-light.png")
@@ -241,7 +280,7 @@ class BudgetWorkflowTest {
         assertEquals(0xFF85B9D9, vm.state.value!!.category(id)!!.color)
         compose.onAllNodes(hasScrollToIndexAction()).onLast().performScrollToNode(hasText("Books"))
         compose.onNodeWithText("Books").performClick()
-        compose.onNodeWithText("Name").performTextReplacement("Bookshop")
+        compose.onNodeWithContentDescription("Name").performTextReplacement("Bookshop")
         compose.onAllNodesWithText("Save").onLast().performClick()
         compose.waitUntil(10000) { vm.state.value!!.category(id)?.name == "Bookshop" }
         compose
@@ -437,7 +476,7 @@ class BudgetWorkflowTest {
         compose.waitUntil(10000) { vm.state.value!!.entries.size == 8 }
         screenshot("01-home.png")
         compose.onNodeWithContentDescription("Open budget").performClick()
-        compose.onNodeWithText("Overall budget").performTextReplacement("1300")
+        compose.onNodeWithContentDescription("Overall budget").performTextReplacement("1300")
         compose.onNodeWithText("Save").performClick()
         compose.waitUntil(10000) { vm.state.value!!.preferences.overallBudget == 130000L }
         compose.onNodeWithContentDescription("Insights").performClick()

@@ -76,6 +76,11 @@ Captured from the running Android app with sample data. Select an image to view 
     <td align="center" width="33%"><a href="qa/screenshots/14-color-picker-dark.png"><img src="qa/screenshots/14-color-picker-dark.png" alt="Fleur dark color palette screen" width="220" /></a><br /><sub>Dark color palette</sub></td>
     <td align="center" width="33%"><a href="qa/screenshots/16-restore-dark.png"><img src="qa/screenshots/16-restore-dark.png" alt="Fleur restore confirmation screen" width="220" /></a><br /><sub>Restore confirmation</sub></td>
   </tr>
+  <tr>
+    <td align="center" width="33%"><a href="qa/screenshots/18-account-input-light.png"><img src="qa/screenshots/18-account-input-light.png" alt="Fleur borderless account name input in light mode" width="220" /></a><br /><sub>Light account input</sub></td>
+    <td align="center" width="33%"><a href="qa/screenshots/19-account-input-dark.png"><img src="qa/screenshots/19-account-input-dark.png" alt="Fleur borderless account name input in dark mode" width="220" /></a><br /><sub>Dark account input</sub></td>
+    <td align="center" width="33%"><a href="qa/screenshots/20-account-input-release.png"><img src="qa/screenshots/20-account-input-release.png" alt="Fleur account input in the installed release APK" width="220" /></a><br /><sub>Installed release input</sub></td>
+  </tr>
 </table>
 
 </details>
@@ -111,7 +116,7 @@ Both variants use this workstation's Android debug key. The release variant shri
 | Repeating entries | Daily, weekly, fortnightly, monthly, quarterly, yearly, custom intervals/weekdays, month-end and end dates; one-occurrence or following-series edits/deletes |
 | Accounts | Spending, savings and debt accounts, opening balances, goals, debt limits, balance updates, transfers, hide/unhide, reorder and confirmed deletion |
 | Categories | Custom income/expense categories, 697 original icons, 30 colors, category search, budgets, reorder and safe deletion |
-| Appearance | Paper background, watercolor category badges and color swatches, light/dark/system mode, accent colors, eight heading font choices, heading size and optional decimal display |
+| Appearance | Paper background, watercolor category badges and color swatches, borderless rounded inputs, light/dark/system mode, accent colors, eight heading font choices, heading size and optional decimal display |
 | Preferences | Currency, default account/paid status, budget frequency, month start, week start, carryover, haptics and visibility controls |
 | Android features | Document-picker backup/restore and CSV/PDF export, daily reminders, device-credential app lock, and home-screen summary widget |
 

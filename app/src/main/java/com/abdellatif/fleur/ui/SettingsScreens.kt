@@ -319,12 +319,12 @@ fun CurrencyPicker(current: String, onSelect: (String) -> Unit, onClose: () -> U
     val currencies = remember { Currency.getAvailableCurrencies().sortedBy { it.currencyCode } }
     PaperDialog(onClose) {
         SheetTopBar("Currency", onClose)
-        OutlinedTextField(
+        FleurInput(
             search,
             { search = it },
-            placeholder = { Text("Search currencies") },
+            label = "Search currencies",
+            showLabel = false,
             modifier = Modifier.fillMaxWidth().padding(20.dp),
-            singleLine = true,
         )
         LazyColumn(Modifier.fillMaxSize().padding(horizontal = 24.dp)) {
             items(

@@ -55,10 +55,10 @@ The fixture includes future entries: period totals include those entries while a
 ## Final results
 
 - `:app:testDebugUnitTest`: **10 tests, zero failures/errors** (`unit-tests.xml`).
-- `:app:connectedDebugAndroidTest`: **10 tests, zero failures/errors** (`android-tests.xml`, `ui-device-tests.log`).
+- Android instrumentation: **11 tests, zero failures/errors** (`android-tests.xml`, `input-device-tests.log`; run directly with ADB).
 - Debug lint: **zero errors**, warnings described above. Release lint/build succeeded (`final-build.log`).
-- Personal APK: `../dist/Fleur-Personal-1.0.apk`, **14,145,584 bytes**, version 1.0 (code 1), Android 10/API 29 minimum, target API 37. Includes ARM and x86 variants.
-- APK SHA-256: `9d530956463437c52696f9decc900523579f6542f261f788f5262bf1d0b1c79f`. Android APK v2 signature verified (`personal-apk-signature.txt`, `../dist/SHA256SUMS`).
+- Personal APK: `../dist/Fleur-Personal-1.0.apk`, **14,108,424 bytes**, version 1.0 (code 1), Android 10/API 29 minimum, target API 37. Includes ARM and x86 variants.
+- APK SHA-256: `096b086f6bcca9fc080b137fed24115705fb9d18e2b62643b7bbc468389de557`. Android APK v2 signature verified (`personal-apk-signature.txt`, `../dist/SHA256SUMS`).
 - Final optimized APK installed over the debug build without losing the saved budget/app-lock preference, started, and unlocked using the device PIN (`release-fixed-start.xml`, `release-fixed-home.xml`).
 - With App Lock enabled, selecting a JSON backup returned to the locked screen without displaying its restore confirmation. Entering the correct device PIN revealed the confirmation; restore completed and persisted after background/reopen (`release-restore-locked.xml`, `release-restore-authenticated.xml`, `release-restored-reopen.xml`).
 - Final optimized release created an exact 12.34 expense, persisted it, showed it in Transactions, deleted it with confirmation, and returned to an empty budget (`release-crud-created.xml`, `release-crud-list.xml`, `release-crud-clean.xml`).
@@ -95,3 +95,13 @@ The emulator displayed a System UI timeout overlay during its initial boot. Afte
 - `screenshots/17-release-main-dark.png`: the updated installed app.
 
 The optimized APK installed and launched, switched to dark mode through the new choice sheet, opened Android's document picker and displayed the themed restore confirmation. Cancel returned to the budget without restoring data. `ui-release-runtime.log` contains no AndroidRuntime errors. The attached physical phone was not used for these checks.
+
+
+## Input styling on 2026-11-01
+
+- Replaced Material outlined text fields with one shared `BasicTextField` component: soft translucent rounded backgrounds, no outline or floating label, and separate labels where needed. Name fields are compact and centered; numeric, budget and search inputs use the same surface treatment.
+- Text selection handles, selection highlight and carets follow the chosen accent. Fields retain accessible descriptions, numeric keyboards, validation and existing save behavior. The keyboard Done action clears focus.
+- Debug/release builds, all 10 JVM tests and debug lint passed (`input-build-final.log`). All 11 Android tests passed (`input-device-tests.log`), including a new light/dark account-name editing test that checks compact width, explicit saving and unchanged balance. Existing workflows exercise search, categories, savings, budgets and recurrence.
+- `screenshots/18-account-input-light.png` and `19-account-input-dark.png` show the new name field in both themes; the README gallery includes both. The screenshot-producing workflows were refreshed from the successful full test run.
+- The emulator displayed Process system and System UI timeout overlays during cold boot before this app was installed. Both were dismissed; the final screenshots were inspected without those overlays. Physical-phone input behavior was not checked.
+- The optimized release APK installed successfully. Native Android input typed `Main` into the account-name field, Save persisted it, and the account balance remained $0.00 (`input-release-typed.xml`, `input-release-saved.xml`). `screenshots/20-account-input-release.png` shows the actual release field and accent caret; `input-release-runtime.log` contains no fatal AndroidRuntime exception. The APK v2 signature and distribution checksum were verified.
