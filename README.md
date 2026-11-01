@@ -1,4 +1,39 @@
+![Fleur: Your budget, in bloom. A botanical paper journal with pastel budget charts.](docs/branding/fleur-cover.png)
+
 # Fleur Personal
+
+<p align="center">
+  <a href="https://developer.android.com/about/versions/10">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/badge/Android-10%2B-3DDC84.svg?variant=secondary&amp;theme=rose&amp;mode=dark&amp;logo=android" />
+      <img alt="Android 10 and newer" src="https://shieldcn.dev/badge/Android-10%2B-3DDC84.svg?variant=secondary&amp;theme=rose&amp;mode=light&amp;logo=android" />
+    </picture>
+  </a>
+  <a href="https://kotlinlang.org/">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/badge/Kotlin-2.2.10-7F52FF.svg?variant=secondary&amp;theme=rose&amp;mode=dark&amp;logo=kotlin" />
+      <img alt="Kotlin 2.2.10" src="https://shieldcn.dev/badge/Kotlin-2.2.10-7F52FF.svg?variant=secondary&amp;theme=rose&amp;mode=light&amp;logo=kotlin" />
+    </picture>
+  </a>
+  <a href="https://developer.android.com/compose">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/badge/UI-Jetpack%20Compose-4285F4.svg?variant=secondary&amp;theme=rose&amp;mode=dark&amp;logo=jetpackcompose" />
+      <img alt="Jetpack Compose UI" src="https://shieldcn.dev/badge/UI-Jetpack%20Compose-4285F4.svg?variant=secondary&amp;theme=rose&amp;mode=light&amp;logo=jetpackcompose" />
+    </picture>
+  </a>
+  <a href="#data-and-exports">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/badge/Storage-local-DF84A6.svg?variant=secondary&amp;theme=rose&amp;mode=dark&amp;logo=sqlite" />
+      <img alt="Local SQLite storage" src="https://shieldcn.dev/badge/Storage-local-DF84A6.svg?variant=secondary&amp;theme=rose&amp;mode=light&amp;logo=sqlite" />
+    </picture>
+  </a>
+</p>
+
+<p align="center">
+  <a href="#included">Features</a> &middot;
+  <a href="#build-and-run">Build and run</a> &middot;
+  <a href="qa/VERIFICATION.md">Verification</a>
+</p>
 
 A native Kotlin/Jetpack Compose budget app rebuilt from the supplied Fleur screenshots and the recovered Android APK references. The project uses the original paper textures, heading fonts, category vectors, and tab icons. Its application ID is `com.abdellatif.fleur`.
 
