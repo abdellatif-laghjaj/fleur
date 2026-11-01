@@ -2,6 +2,7 @@ package com.abdellatif.fleur
 
 import android.app.Application
 import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.lifecycle.ViewModelStore
@@ -222,6 +223,69 @@ class BudgetWorkflowTest {
         compose.onNodeWithContentDescription("Transactions").performClick().assertIsSelected()
         compose.onNodeWithContentDescription("Accounts").performClick().assertIsSelected()
         home.performClick().assertIsSelected()
+    }
+
+    @Test
+    fun tabSwitchHasNoOutgoingPageAfterTheFirstFrame() {
+        compose.onNodeWithText("Add income").assertIsDisplayed()
+        compose.mainClock.autoAdvance = false
+        try {
+            compose.onNodeWithContentDescription("Accounts").performClick()
+            compose.mainClock.advanceTimeByFrame()
+            compose.onNodeWithText("NET WORTH").assertIsDisplayed()
+            compose.onNodeWithText("Add income").assertDoesNotExist()
+            compose.onNodeWithContentDescription("Home").performClick()
+            compose.mainClock.advanceTimeByFrame()
+            compose.onNodeWithText("Add income").assertIsDisplayed()
+            compose.onNodeWithText("NET WORTH").assertDoesNotExist()
+        } finally {
+            compose.mainClock.autoAdvance = true
+        }
+    }
+
+    @Test
+    fun tabSwitchPreservesInsightSelectionAndTransactionScroll() {
+        compose.runOnIdle {
+            vm.change { state ->
+                state.copy(
+                    entries =
+                        List(60) { i ->
+                            Entry(
+                                id = "scroll-$i",
+                                type = EntryType.EXPENSE,
+                                amount = 100,
+                                categoryId =
+                                    state.categories.first { it.type == EntryType.EXPENSE }.id,
+                                accountId = "default",
+                                notes = "Scroll entry $i",
+                                createdAt = i.toLong(),
+                            )
+                        },
+                )
+            }
+        }
+        compose.waitUntil(10000) { vm.state.value!!.entries.size == 60 }
+        compose.onNodeWithContentDescription("Insights").performClick()
+        compose.waitUntil(10000) {
+            compose.onAllNodesWithText("INCOME").fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithText("INCOME").performClick()
+        compose.onNodeWithText("No income transactions in this time period.").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Accounts").performClick()
+        compose.onNodeWithContentDescription("Insights").performClick()
+        compose.onNodeWithText("No income transactions in this time period.").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Transactions").performClick()
+        val list = compose.onNode(hasScrollToIndexAction())
+        list.performScrollToNode(hasText("Scroll entry 0"))
+        val before =
+            list.fetchSemanticsNode().config[SemanticsProperties.VerticalScrollAxisRange].value()
+        assertTrue(before > 0)
+        compose.onNodeWithContentDescription("Home").performClick()
+        compose.onNodeWithContentDescription("Transactions").performClick()
+        compose.onNodeWithText("Scroll entry 0").assertIsDisplayed()
+        val after =
+            list.fetchSemanticsNode().config[SemanticsProperties.VerticalScrollAxisRange].value()
+        assertEquals(before, after, .01f)
     }
 
     @Test

@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
@@ -38,16 +39,18 @@ import kotlin.math.*
 @Composable
 fun HomeScreen(
     state: BudgetState,
-    range: DateRange,
     accountIds: Set<String>,
+    periodOccurrences: List<Occurrence>,
+    carryOverBalances: Map<String, Long>,
+    periodBalances: Map<String, Long>,
     onCategory: (String) -> Unit,
     onAdd: (EntryType) -> Unit,
     onBudget: () -> Unit,
 ) {
     val p = state.preferences
     val occurrences =
-        remember(state, range, accountIds) {
-            state.occurrences(range.start, range.end).filter {
+        remember(periodOccurrences, accountIds) {
+            periodOccurrences.filter {
                 accountIds.isEmpty() ||
                     it.entry.accountId in accountIds ||
                     it.entry.toAccountId in accountIds
@@ -66,11 +69,7 @@ fun HomeScreen(
                 (accountIds.isEmpty() || it.id in accountIds)
         }
     val carry =
-        remember(state, range, accountIds) {
-            if (p.carryOver)
-                selected.sumOf { state.accountBalance(it.id, range.start.minusDays(1)) }
-            else 0L
-        }
+        remember(carryOverBalances, selected) { selected.sumOf { carryOverBalances[it.id] ?: 0L } }
     val transfer =
         occurrences
             .filter { it.entry.type == EntryType.TRANSFER }
@@ -240,7 +239,7 @@ fun HomeScreen(
                     state.accounts.filter { it.type == AccountType.DEBT && !it.hidden },
                     key = { "debt-${it.id}" },
                 ) { a ->
-                    FormRow(a.name, formatMoney(state.accountBalance(a.id, range.end), p))
+                    FormRow(a.name, formatMoney(periodBalances[a.id] ?: 0L, p))
                 }
             }
         }
@@ -349,12 +348,13 @@ fun InsightsScreen(
     state: BudgetState,
     range: DateRange,
     accountIds: Set<String>,
+    periodOccurrences: List<Occurrence>,
     onCategory: (String) -> Unit,
 ) {
     var type by rememberSaveable { mutableStateOf(EntryType.EXPENSE) }
     val occurrences =
-        remember(state, range, accountIds, type) {
-            state.occurrences(range.start, range.end).filter {
+        remember(periodOccurrences, accountIds, type) {
+            periodOccurrences.filter {
                 it.entry.type == type && (accountIds.isEmpty() || it.entry.accountId in accountIds)
             }
         }
@@ -561,18 +561,19 @@ fun TransactionsScreen(
     state: BudgetState,
     range: DateRange,
     filter: TransactionFilter,
+    periodOccurrences: List<Occurrence>,
     query: String,
     calendar: Boolean,
     onEdit: (Occurrence) -> Unit,
     onPaid: (Occurrence) -> Unit,
     onAdd: (LocalDate) -> Unit,
 ) {
-    val listState = rememberLazyListState()
-    LaunchedEffect(calendar, range) { listState.scrollToItem(0) }
+    val listState =
+        rememberSaveable(calendar, range, saver = LazyListState.Saver) { LazyListState() }
     var selectedEpoch by rememberSaveable(range.start) { mutableStateOf<Long?>(null) }
     val all =
-        remember(state, range, filter, query) {
-            state.occurrences(range.start, range.end).filter { o ->
+        remember(periodOccurrences, state.categories, state.accounts, filter, query) {
+            periodOccurrences.filter { o ->
                 val e = o.entry
                 (filter.type == null || filter.type == e.type) &&
                     (filter.categories.isEmpty() || e.categoryId in filter.categories) &&
@@ -795,13 +796,12 @@ fun CalendarMonth(
 @Composable
 fun AccountsScreen(
     state: BudgetState,
+    balances: Map<String, Long>,
     onAccount: (Account) -> Unit,
     onNew: () -> Unit,
     onReorder: (String, String) -> Unit,
 ) {
     val listState = rememberLazyListState()
-    val balances =
-        remember(state) { state.accounts.associate { it.id to state.accountBalance(it.id) } }
     val net = state.visibleAccounts.filter { it.includeInBalance }.sumOf { balances[it.id] ?: 0 }
     LazyColumn(
         Modifier.fillMaxSize(),

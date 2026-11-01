@@ -28,6 +28,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
@@ -62,6 +63,10 @@ val Positive = Color(0xFF51BF83)
 val Negative = Color(0xFFED8F8C)
 val LocalPreferences = staticCompositionLocalOf { Preferences() }
 
+private data class FleurTextures(val dark: Boolean, val paper: Painter, val watercolor: Painter)
+
+private val LocalFleurTextures = staticCompositionLocalOf<FleurTextures?> { null }
+
 @Composable
 fun FleurTheme(preferences: Preferences, content: @Composable () -> Unit) {
     val dark =
@@ -70,6 +75,17 @@ fun FleurTheme(preferences: Preferences, content: @Composable () -> Unit) {
             "Light" -> false
             else -> androidx.compose.foundation.isSystemInDarkTheme()
         }
+    val inheritedTextures = LocalFleurTextures.current
+    val textures =
+        if (inheritedTextures?.dark == dark) inheritedTextures
+        else
+            FleurTextures(
+                dark,
+                painterResource(if (dark) R.drawable.paper_dark else R.drawable.paper_light),
+                painterResource(
+                    if (dark) R.drawable.watercolor_spot_dark else R.drawable.watercolor_spot,
+                ),
+            )
     val accent = Color(preferences.accent)
     val colors =
         if (dark)
@@ -92,7 +108,10 @@ fun FleurTheme(preferences: Preferences, content: @Composable () -> Unit) {
                 surfaceVariant = Color(0xFFF1F0EE),
                 outline = Color(0xFFB7B5B3),
             )
-    CompositionLocalProvider(LocalPreferences provides preferences) {
+    CompositionLocalProvider(
+        LocalPreferences provides preferences,
+        LocalFleurTextures provides textures,
+    ) {
         MaterialTheme(
             colorScheme = colors,
             typography =
@@ -122,7 +141,7 @@ fun FleurDesign(preferences: Preferences, content: @Composable () -> Unit) {
         val dark = MaterialTheme.colorScheme.background.red < .5f
         Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
             Image(
-                painterResource(if (dark) R.drawable.paper_dark else R.drawable.paper_light),
+                checkNotNull(LocalFleurTextures.current).paper,
                 null,
                 Modifier.matchParentSize(),
                 contentScale = ContentScale.Crop,
@@ -349,9 +368,7 @@ fun SmallIconButton(
 
 @Composable
 fun WatercolorSpot(color: Color, modifier: Modifier = Modifier) {
-    val dark = MaterialTheme.colorScheme.background.red < .5f
-    val texture =
-        painterResource(if (dark) R.drawable.watercolor_spot_dark else R.drawable.watercolor_spot)
+    val texture = checkNotNull(LocalFleurTextures.current).watercolor
     Box(modifier) {
         // Fleur layers the same translucent paint twice to retain the pigment texture.
         repeat(2) {

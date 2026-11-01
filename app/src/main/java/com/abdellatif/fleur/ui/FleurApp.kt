@@ -1,6 +1,5 @@
 package com.abdellatif.fleur.ui
 
-import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -9,6 +8,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -26,6 +26,8 @@ import com.abdellatif.fleur.data.*
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @Composable
 fun FleurApp(
@@ -98,6 +100,45 @@ private fun BudgetContent(
         else periodRange(anchor, period, p)
     val filter =
         TransactionFilter(filterType, categoryFilters.toSet(), accountFilters.toSet(), filterPaid)
+    val tabState = rememberSaveableStateHolder()
+    val today = LocalDate.now()
+    val calculatedData by
+        produceState<BudgetScreenData?>(null, state, range, today) {
+            value =
+                withContext(Dispatchers.Default) {
+                    BudgetScreenData(
+                        source = state,
+                        range = range,
+                        today = today,
+                        occurrences = state.occurrences(range.start, range.end),
+                        balances =
+                            state.accounts.associate {
+                                it.id to state.accountBalance(it.id, today)
+                            },
+                        carryOver =
+                            if (p.carryOver)
+                                state.accounts.associate {
+                                    it.id to
+                                        state.accountBalance(
+                                            it.id,
+                                            range.start.minusDays(1),
+                                        )
+                                }
+                            else emptyMap(),
+                        periodBalances =
+                            if (p.showDebt)
+                                state.accounts
+                                    .filter { it.type == AccountType.DEBT }
+                                    .associate {
+                                        it.id to state.accountBalance(it.id, range.end)
+                                    }
+                            else emptyMap(),
+                    )
+                }
+        }
+    val screenData = calculatedData?.takeIf {
+        it.source === state && it.range == range && it.today == today
+    }
     val snackbar = remember { SnackbarHostState() }
     val haptic = LocalHapticFeedback.current
     LaunchedEffect(vm) { vm.errors.collect { snackbar.showSnackbar(it) } }
@@ -295,46 +336,63 @@ private fun BudgetContent(
                     }
                 }
             Box(Modifier.weight(1f)) {
-                Crossfade(tab, label = "tab", modifier = Modifier.fillMaxSize()) { current ->
-                    when (current) {
-                        0 ->
-                            HomeScreen(
-                                state,
-                                range,
-                                accountFilters.toSet(),
-                                ::category,
-                                { newEntry(it) },
-                                { open("budget") },
-                            )
-                        1 -> InsightsScreen(state, range, accountFilters.toSet(), ::category)
-                        2 ->
-                            TransactionsScreen(
-                                state,
-                                range,
-                                filter,
-                                query,
-                                calendar,
-                                ::edit,
-                                vm::togglePaid,
-                                { newEntry(date = it) },
-                            )
-                        3 ->
-                            AccountsScreen(
-                                state,
-                                { a ->
-                                    selectedAccount = a.id
-                                    open("account-actions")
-                                },
-                                {
-                                    selectedAccount = ""
-                                    open("account")
-                                },
-                                { from, to ->
-                                    vm.change { BudgetActions.reorderAccounts(it, from, to) }
-                                },
-                            )
+                if (screenData == null) {
+                    CircularProgressIndicator(
+                        Modifier.align(Alignment.Center).size(24.dp),
+                        strokeWidth = 2.dp,
+                    )
+                } else
+                    tabState.SaveableStateProvider(tab) {
+                        when (tab) {
+                            0 ->
+                                HomeScreen(
+                                    state,
+                                    accountFilters.toSet(),
+                                    screenData.occurrences,
+                                    screenData.carryOver,
+                                    screenData.periodBalances,
+                                    ::category,
+                                    { newEntry(it) },
+                                    { open("budget") },
+                                )
+                            1 ->
+                                InsightsScreen(
+                                    state,
+                                    range,
+                                    accountFilters.toSet(),
+                                    screenData.occurrences,
+                                    ::category,
+                                )
+                            2 ->
+                                TransactionsScreen(
+                                    state,
+                                    range,
+                                    filter,
+                                    screenData.occurrences,
+                                    query,
+                                    calendar,
+                                    ::edit,
+                                    vm::togglePaid,
+                                    { newEntry(date = it) },
+                                )
+                            3 ->
+                                AccountsScreen(
+                                    state,
+                                    screenData.balances,
+                                    { a ->
+                                        selectedAccount = a.id
+                                        open("account-actions")
+                                    },
+                                    {
+                                        selectedAccount = ""
+                                        open("account")
+                                    },
+                                    { from, to ->
+                                        vm.change { BudgetActions.reorderAccounts(it, from, to) }
+                                    },
+                                )
+                        }
                     }
-                }
                 if (tab == 0)
                     Box(
                         Modifier.align(Alignment.BottomEnd)
@@ -478,3 +536,13 @@ private fun BudgetContent(
         }
     }
 }
+
+private data class BudgetScreenData(
+    val source: BudgetState,
+    val range: DateRange,
+    val today: LocalDate,
+    val occurrences: List<Occurrence>,
+    val balances: Map<String, Long>,
+    val carryOver: Map<String, Long>,
+    val periodBalances: Map<String, Long>,
+)
