@@ -55,10 +55,10 @@ The fixture includes future entries: period totals include those entries while a
 ## Final results
 
 - `:app:testDebugUnitTest`: **10 tests, zero failures/errors** (`unit-tests.xml`).
-- Android instrumentation: **13 tests, zero outstanding failures/errors** (`android-tests.xml`; 12 passed in `perf-final-device-tests.log`, the corrected remaining test passed in `perf-scroll-final.log`).
+- Android instrumentation: **11 tests, zero failures/errors** (`android-tests.xml`, `input-device-tests.log`; run directly with ADB).
 - Debug lint: **zero errors**, warnings described above. Release lint/build succeeded (`final-build.log`).
 - Personal APK: `../dist/Fleur-Personal-1.0.apk`, **14,108,424 bytes**, version 1.0 (code 1), Android 10/API 29 minimum, target API 37. Includes ARM and x86 variants.
-- APK SHA-256: `43062b0ac1801713637955257477ca8e4418cd4a35f5b39180564600a8ed7d70`. Android APK v2 signature verified (`personal-apk-signature.txt`, `../dist/SHA256SUMS`).
+- APK SHA-256: `096b086f6bcca9fc080b137fed24115705fb9d18e2b62643b7bbc468389de557`. Android APK v2 signature verified (`personal-apk-signature.txt`, `../dist/SHA256SUMS`).
 - Final optimized APK installed over the debug build without losing the saved budget/app-lock preference, started, and unlocked using the device PIN (`release-fixed-start.xml`, `release-fixed-home.xml`).
 - With App Lock enabled, selecting a JSON backup returned to the locked screen without displaying its restore confirmation. Entering the correct device PIN revealed the confirmation; restore completed and persisted after background/reopen (`release-restore-locked.xml`, `release-restore-authenticated.xml`, `release-restored-reopen.xml`).
 - Final optimized release created an exact 12.34 expense, persisted it, showed it in Transactions, deleted it with confirmation, and returned to an empty budget (`release-crud-created.xml`, `release-crud-list.xml`, `release-crud-clean.xml`).
@@ -105,22 +105,3 @@ The optimized APK installed and launched, switched to dark mode through the new 
 - `screenshots/18-account-input-light.png` and `19-account-input-dark.png` show the new name field in both themes; the README gallery includes both. The screenshot-producing workflows were refreshed from the successful full test run.
 - The emulator displayed Process system and System UI timeout overlays during cold boot before this app was installed. Both were dismissed; the final screenshots were inspected without those overlays. Physical-phone input behavior was not checked.
 - The optimized release APK installed successfully. Native Android input typed `Main` into the account-name field, Save persisted it, and the account balance remained $0.00 (`input-release-typed.xml`, `input-release-saved.xml`). `screenshots/20-account-input-release.png` shows the actual release field and accent caret; `input-release-runtime.log` contains no fatal AndroidRuntime exception. The APK v2 signature and distribution checksum were verified.
-
-
-## Navigation and scrolling performance on 2026-11-01
-
-The reported phone installation came from Android Studio Run. That normally uses the debug variant; performance comparisons should use the R8-optimized release APK. The recovered original APK also contains Compose runtime/UI libraries, so the available evidence does not point to a different UI framework as the explanation. Its complete rendering/caching behavior has not been profiled against this rebuild.
-
-- Removed the bottom-tab `Crossfade`, which kept outgoing/incoming pages composed and blended during each switch. Only the selected page is now composed.
-- Added a saveable state holder for tabs. Insights retains its Income/Expense selection and lists retain their positions. The transaction-list reset no longer runs on every tab re-entry.
-- Period occurrences and current/carryover/debt balances are calculated once per budget/range/date on `Dispatchers.Default` and shared by pages. The UI shows a loading indicator while a new snapshot is calculated; it never combines an old snapshot with a changed budget or period. Tab selection does not restart those calculations.
-- Decoded paper/watercolor painters are shared through the theme and inherited by nested editor themes. List rows no longer each decode the same PNG as they enter composition. The original pixels, two-pass watercolor tint and light/dark variants are retained.
-- Added tests for immediate page replacement with the animation clock stopped after one frame, and for preserved Insights selection/transaction scroll using 60 entries.
-
-The first instrumentation attempt on an Android 16 emulator configured with 1536 MB RAM terminated before tests completed. The device log records ANRs in System UI, the keyboard, Google services and the test app, with high CPU/I/O pressure (`perf-emulator-pressure.log`). No performance numbers are inferred from that run. Physical-phone frame timing, comparison with the original, startup profiles and a broad hardware benchmark remain unmeasured.
-
-Build, all 10 JVM tests and lint completed successfully in `perf-checked-build.log`. The full Android run passed 12 of 13 cases, including immediate first-frame replacement and all existing workflows. The new scroll/selection test initially looked for `Income` rather than the button's uppercase `INCOME`; after fixing the selector and waiting for page readiness, that case passed in `perf-scroll-final.log`. `android-tests.xml` contains the 13 latest passing case results across those two runs. Production code was unchanged during the test-selector reruns.
-
-The successful functional retry used a disposable Android 16 emulator at 720x1600, density 320 and 2048 MB RAM, with background Google services disabled only in its read-only guest overlay. A pending System UI timeout overlay was dismissed before release visual checks. Screenshots from the earlier instrumentation pass contained that overlay and did not replace the README gallery. These checks establish behavior, not a frame-rate comparison with the original on the user's phone.
-
-The optimized release APK installed successfully. Native Android UI checks switched tabs, selected Income in Insights, left and returned with that selection preserved, opened the account editor/color palette, and returned Home. The clean palette capture (`perf-release-palette.png`) was inspected and retains distinct watercolor tints and paper texture. `perf-release-runtime.log` contains no fatal AndroidRuntime exception. The release APK v2 signature and distribution checksum were verified.

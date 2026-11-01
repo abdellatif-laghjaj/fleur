@@ -104,8 +104,6 @@ $adb = Join-Path $env:LOCALAPPDATA 'Android\Sdk\platform-tools\adb.exe'
 & $adb -s emulator-5554 shell am start -n com.abdellatif.fleur/.MainActivity
 ```
 
-For scrolling and tab-switching comparisons, install the **release** APK. Android Studio Run normally installs the debug variant, which adds Compose development overhead. The release build has R8 optimization enabled. Bottom tabs switch directly, preserve their scroll/selection state, and share background-calculated transaction schedules and balances. Paper and watercolor textures are decoded once per theme and reused across pages and list rows.
-
 Both variants use this workstation's Android debug key. The release variant shrinks resources and optimizes the whole app with R8; it is an installable personal build, not a Play Store publication. Keep the signing key if you want to install future updates over existing data.
 
 ## Included

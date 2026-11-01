@@ -1,16 +1,14 @@
 <?xml version='1.0' encoding='utf-8'?>
-<testsuite name="Fleur Android instrumentation (full run plus corrected test rerun)" tests="13" failures="0" errors="0" skipped="0">
+<testsuite name="Fleur Android instrumentation" tests="11" failures="0" errors="0" skipped="0">
   <testcase classname="com.abdellatif.fleur.BudgetPersistenceTest" name="durableRoundTripAndInvalidRestoreCannotReplaceExistingBudget" />
   <testcase classname="com.abdellatif.fleur.BudgetWidgetTest" name="boundWidgetShowsDebtTransferAndHidesAmountsWhenLocked" />
-  <testcase classname="com.abdellatif.fleur.BudgetWorkflowTest" name="accountActionSheetUpdatesBalanceAndConfirmsDeletionInBothThemes" />
+  <testcase classname="com.abdellatif.fleur.BudgetWorkflowTest" name="monthlyRecurringTransactionCanBeCreatedAndDeletedAsASeries" />
   <testcase classname="com.abdellatif.fleur.BudgetWorkflowTest" name="centeredAccountNameInputSavesInBothThemes" />
+  <testcase classname="com.abdellatif.fleur.BudgetWorkflowTest" name="savingsAccountAndTransferPreserveCombinedBalance" />
+  <testcase classname="com.abdellatif.fleur.BudgetWorkflowTest" name="referenceScreensAndSettingsRenderWithRealAccounting" />
   <testcase classname="com.abdellatif.fleur.BudgetWorkflowTest" name="customCategoryCanChooseIconColorBeRenamedAndDeleted" />
   <testcase classname="com.abdellatif.fleur.BudgetWorkflowTest" name="debtTransfersAffectCashSummaryAndSeparateDebtTotals" />
   <testcase classname="com.abdellatif.fleur.BudgetWorkflowTest" name="incomeExpenseSearchCalendarEditAndPaidStatusWork" />
-  <testcase classname="com.abdellatif.fleur.BudgetWorkflowTest" name="monthlyRecurringTransactionCanBeCreatedAndDeletedAsASeries" />
   <testcase classname="com.abdellatif.fleur.BudgetWorkflowTest" name="navigationHasNoPressedRippleAndStillSelectsTabs" />
-  <testcase classname="com.abdellatif.fleur.BudgetWorkflowTest" name="referenceScreensAndSettingsRenderWithRealAccounting" />
-  <testcase classname="com.abdellatif.fleur.BudgetWorkflowTest" name="savingsAccountAndTransferPreserveCombinedBalance" />
-  <testcase classname="com.abdellatif.fleur.BudgetWorkflowTest" name="tabSwitchHasNoOutgoingPageAfterTheFirstFrame" />
-  <testcase classname="com.abdellatif.fleur.BudgetWorkflowTest" name="tabSwitchPreservesInsightSelectionAndTransactionScroll" />
+  <testcase classname="com.abdellatif.fleur.BudgetWorkflowTest" name="accountActionSheetUpdatesBalanceAndConfirmsDeletionInBothThemes" />
 </testsuite>
