@@ -55,10 +55,10 @@ The fixture includes future entries: period totals include those entries while a
 ## Final results
 
 - `:app:testDebugUnitTest`: **10 tests, zero failures/errors** (`unit-tests.xml`).
-- `:app:connectedDebugAndroidTest`: **8 tests, zero failures/errors** (`android-tests.xml`, `acceptance.log`).
+- `:app:connectedDebugAndroidTest`: **10 tests, zero failures/errors** (`android-tests.xml`, `ui-device-tests.log`).
 - Debug lint: **zero errors**, warnings described above. Release lint/build succeeded (`final-build.log`).
-- Personal APK: `../dist/Fleur-Personal-1.0.apk`, **13,811,576 bytes**, version 1.0 (code 1), Android 10/API 29 minimum, target API 37. Includes ARM and x86 variants.
-- APK SHA-256: `341d2e114e7304bad2c046116ccc32385bb6ce700ace6cddacd1e7712347b086`. Android APK v2 signature verified (`personal-apk-signature.txt`, `../dist/SHA256SUMS`).
+- Personal APK: `../dist/Fleur-Personal-1.0.apk`, **14,145,584 bytes**, version 1.0 (code 1), Android 10/API 29 minimum, target API 37. Includes ARM and x86 variants.
+- APK SHA-256: `9d530956463437c52696f9decc900523579f6542f261f788f5262bf1d0b1c79f`. Android APK v2 signature verified (`personal-apk-signature.txt`, `../dist/SHA256SUMS`).
 - Final optimized APK installed over the debug build without losing the saved budget/app-lock preference, started, and unlocked using the device PIN (`release-fixed-start.xml`, `release-fixed-home.xml`).
 - With App Lock enabled, selecting a JSON backup returned to the locked screen without displaying its restore confirmation. Entering the correct device PIN revealed the confirmation; restore completed and persisted after background/reopen (`release-restore-locked.xml`, `release-restore-authenticated.xml`, `release-restored-reopen.xml`).
 - Final optimized release created an exact 12.34 expense, persisted it, showed it in Transactions, deleted it with confirmation, and returned to an empty budget (`release-crud-created.xml`, `release-crud-list.xml`, `release-crud-clean.xml`).
@@ -74,3 +74,24 @@ $env:ANDROID_SERIAL = 'emulator-5554'
 ```
 
 Run device tests and release compilation separately when the workstation is under memory/CPU pressure.
+
+
+## UI refinement on 2026-11-01
+
+- Reused the original `circlebg_hq` / `circlebg_hq_dark` paint assets, tinted and layered twice as in the recovered implementation. Category and account badges, color-picker swatches, the selected-color previews, date badges and the add button now use their irregular watercolor edge and pigment texture.
+- Shared centered alerts have rounded corners, centered copy, a thin divider and equal-width Cancel / confirmation buttons. Destructive confirmations retain their data-loss warning. Name/balance inputs, the color picker and restore confirmation share this style in both themes.
+- Choice lists and account actions use bottom action sheets with a separate Cancel section. Account actions support editing, exact balance adjustment, hiding and confirmed deletion; the last account cannot be deleted.
+- Bottom navigation has no ripple or press haptic; the selected icon and label still update. An image comparison of the active tab before/during a held press checks that no press overlay appears.
+- `FleurTheme` also themes the activity-level restore confirmation without painting over the underlying screen.
+
+Build, all 10 JVM tests and lint passed in `ui-final-build.log`. All 10 Android tests passed in `ui-device-tests.log`; `android-tests.xml` records their completed runner statuses. This includes balance validation, update/hide/edit/delete actions, cancellation, last-account protection, and the pixel comparison for a held navigation tab.
+
+The emulator displayed a System UI timeout overlay during its initial boot. After dismissing it, the three screenshot-producing workflows were rerun and passed (`ui-screenshot-tests.log`). The refreshed images were inspected without the system overlay:
+
+- `screenshots/11-account-actions-light.png` and `12-account-actions-dark.png`: account action sheets.
+- `screenshots/13-delete-account-dark.png`: centered destructive confirmation.
+- `screenshots/14-color-picker-dark.png` and `15-color-picker-light.png`: original watercolor swatches.
+- `screenshots/16-restore-dark.png`: the activity-level restore alert in the installed optimized APK.
+- `screenshots/17-release-main-dark.png`: the updated installed app.
+
+The optimized APK installed and launched, switched to dark mode through the new choice sheet, opened Android's document picker and displayed the themed restore confirmation. Cancel returned to the budget without restoring data. `ui-release-runtime.log` contains no AndroidRuntime errors. The attached physical phone was not used for these checks.

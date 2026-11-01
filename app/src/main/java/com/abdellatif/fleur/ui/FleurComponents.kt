@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
@@ -54,7 +55,7 @@ val Negative = Color(0xFFED8F8C)
 val LocalPreferences = staticCompositionLocalOf { Preferences() }
 
 @Composable
-fun FleurDesign(preferences: Preferences, content: @Composable () -> Unit) {
+fun FleurTheme(preferences: Preferences, content: @Composable () -> Unit) {
     val dark =
         when (preferences.darkMode) {
             "Dark" -> true
@@ -97,19 +98,25 @@ fun FleurDesign(preferences: Preferences, content: @Composable () -> Unit) {
                 ),
         ) {
             CompositionLocalProvider(LocalContentColor provides colors.onBackground) {
-                Box(Modifier.fillMaxSize().background(colors.background)) {
-                    Image(
-                        painterResource(
-                            if (dark) R.drawable.paper_dark else R.drawable.paper_light,
-                        ),
-                        null,
-                        Modifier.matchParentSize(),
-                        contentScale = ContentScale.Crop,
-                        alpha = if (dark) .48f else .63f,
-                    )
-                    content()
-                }
+                content()
             }
+        }
+    }
+}
+
+@Composable
+fun FleurDesign(preferences: Preferences, content: @Composable () -> Unit) {
+    FleurTheme(preferences) {
+        val dark = MaterialTheme.colorScheme.background.red < .5f
+        Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+            Image(
+                painterResource(if (dark) R.drawable.paper_dark else R.drawable.paper_light),
+                null,
+                Modifier.matchParentSize(),
+                contentScale = ContentScale.Crop,
+                alpha = if (dark) .48f else .63f,
+            )
+            content()
         }
     }
 }
@@ -329,6 +336,25 @@ fun SmallIconButton(
 }
 
 @Composable
+fun WatercolorSpot(color: Color, modifier: Modifier = Modifier) {
+    val dark = MaterialTheme.colorScheme.background.red < .5f
+    val texture =
+        painterResource(if (dark) R.drawable.watercolor_spot_dark else R.drawable.watercolor_spot)
+    Box(modifier) {
+        // Fleur layers the same translucent paint twice to retain the pigment texture.
+        repeat(2) {
+            Image(
+                texture,
+                null,
+                Modifier.matchParentSize(),
+                contentScale = ContentScale.FillBounds,
+                colorFilter = ColorFilter.tint(color),
+            )
+        }
+    }
+}
+
+@Composable
 fun CategoryBadge(
     icon: String,
     color: Long,
@@ -337,14 +363,10 @@ fun CategoryBadge(
     filled: Boolean = true,
 ) {
     Box(
-        modifier
-            .size(size)
-            .then(
-                if (filled) Modifier.background(Color(color).copy(alpha = .90f), CircleShape)
-                else Modifier,
-            ),
+        modifier.size(size),
         contentAlignment = Alignment.Center,
     ) {
+        if (filled) WatercolorSpot(Color(color), Modifier.matchParentSize())
         FleurIcon(icon, Modifier.size(size * .57f), if (filled) Color.White else Color(color))
     }
 }

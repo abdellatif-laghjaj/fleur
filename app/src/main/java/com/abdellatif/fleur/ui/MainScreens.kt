@@ -8,7 +8,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -637,13 +636,10 @@ private fun DateHeading(date: LocalDate) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
-            Modifier.size(36.dp)
-                .background(
-                    Color(colors[date.dayOfMonth % colors.size]).copy(alpha = .75f),
-                    RoundedCornerShape(40, 30, 45, 25),
-                ),
+            Modifier.size(36.dp),
             contentAlignment = Alignment.Center,
         ) {
+            WatercolorSpot(Color(colors[date.dayOfMonth % colors.size]), Modifier.matchParentSize())
             Text(date.dayOfMonth.toString(), fontFamily = BaskervilleItalic, fontSize = 21.sp)
         }
         ScriptHeading(

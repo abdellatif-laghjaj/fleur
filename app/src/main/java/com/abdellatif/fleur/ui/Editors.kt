@@ -82,26 +82,11 @@ fun ChoiceDialog(
     onClose: () -> Unit,
     onSelect: (String) -> Unit,
 ) {
-    AlertDialog(
-        onDismissRequest = onClose,
-        title = { Text(title, fontSize = 19.sp) },
-        text = {
-            Column(Modifier.verticalScroll(rememberScrollState())) {
-                choices.forEach { choice ->
-                    Row(
-                        Modifier.fillMaxWidth()
-                            .clickable { onSelect(choice) }
-                            .padding(vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(choice, Modifier.weight(1f), fontSize = 14.sp)
-                        if (choice == selected)
-                            FleurIcon("check", tint = MaterialTheme.colorScheme.primary)
-                    }
-                }
-            }
-        },
-        confirmButton = { TextButton(onClick = onClose) { Text("Cancel") } },
+    FleurActionSheet(
+        actions = choices.map { choice -> FleurAction(choice) { onSelect(choice) } },
+        onClose = onClose,
+        title = title,
+        selected = selected,
     )
 }
 
@@ -114,24 +99,50 @@ fun TextInputDialog(
     onSave: (String) -> Unit,
 ) {
     var value by rememberSaveable { mutableStateOf(initial) }
-    AlertDialog(
-        onDismissRequest = onClose,
-        title = { Text(title, fontSize = 19.sp) },
-        text = {
-            OutlinedTextField(
-                value,
-                { value = it },
-                singleLine = true,
-                keyboardOptions =
-                    KeyboardOptions(
-                        keyboardType = if (numeric) KeyboardType.Decimal else KeyboardType.Text,
-                    ),
-                modifier = Modifier.fillMaxWidth(),
-            )
+    var error by remember { mutableStateOf<String?>(null) }
+    FleurAlert(
+        title = title,
+        onClose = onClose,
+        confirmLabel = "Save",
+        onConfirm = {
+            try {
+                onSave(value)
+            } catch (e: IllegalArgumentException) {
+                error = e.message
+            }
         },
-        confirmButton = { TextButton(onClick = { onSave(value) }) { Text("Save") } },
-        dismissButton = { TextButton(onClick = onClose) { Text("Cancel") } },
-    )
+    ) {
+        BasicTextField(
+            value,
+            { value = it },
+            singleLine = true,
+            keyboardOptions =
+                KeyboardOptions(
+                    keyboardType = if (numeric) KeyboardType.Decimal else KeyboardType.Text,
+                ),
+            modifier =
+                Modifier.fillMaxWidth()
+                    .background(
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = .06f),
+                        androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
+                    )
+                    .padding(12.dp)
+                    .semantics { contentDescription = title },
+            textStyle =
+                MaterialTheme.typography.bodyLarge.copy(
+                    color = MaterialTheme.colorScheme.onSurface,
+                ),
+            cursorBrush =
+                androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.primary),
+        )
+        if (error != null)
+            Text(
+                error!!,
+                color = FleurDestructive,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(top = 8.dp),
+            )
+    }
 }
 
 @Composable
@@ -428,7 +439,7 @@ fun TransactionEditor(
                 )
             }
         else
-            ConfirmDelete("Delete this transaction?", { deleteScope = false }) {
+            ConfirmDelete("Do you want to delete this transaction?", { deleteScope = false }) {
                 vm.deleteEntry(editing!!, SeriesScope.ONLY, onClose)
             }
     }
@@ -720,34 +731,35 @@ private val FleurColorNames =
 
 @Composable
 fun ColorPicker(current: Long, onSelect: (Long) -> Unit, onClose: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onClose,
-        title = { Text("Choose a color") },
-        text = {
-            Column {
-                FleurColors.chunked(5).forEach { row ->
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                        row.forEach { color ->
-                            Box(
-                                Modifier.padding(5.dp)
-                                    .size(44.dp)
-                                    .background(Color(color), CircleShape)
-                                    .clickable { onSelect(color) }
-                                    .semantics {
-                                        contentDescription =
-                                            FleurColorNames[FleurColors.indexOf(color)] + " color"
-                                    },
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                if (current == color) FleurIcon("check", tint = Color.White)
-                            }
+    FleurAlert(
+        title = "Choose a color",
+        onClose = onClose,
+        confirmLabel = "Close",
+        onConfirm = onClose,
+        cancelLabel = null,
+    ) {
+        Column {
+            FleurColors.chunked(5).forEach { row ->
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                    row.forEach { color ->
+                        Box(
+                            Modifier.padding(3.dp)
+                                .size(44.dp)
+                                .clickable(onClick = { onSelect(color) })
+                                .semantics {
+                                    contentDescription =
+                                        FleurColorNames[FleurColors.indexOf(color)] + " color"
+                                },
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            WatercolorSpot(Color(color), Modifier.matchParentSize())
+                            if (current == color) FleurIcon("check", tint = Color.White)
                         }
                     }
                 }
             }
-        },
-        confirmButton = { TextButton(onClick = onClose) { Text("Close") } },
-    )
+        }
+    }
 }
 
 @Composable
@@ -844,11 +856,9 @@ fun CategoryEditor(
                 "Color",
                 onClick = { picker = "color" },
                 trailing = {
-                    Box(
-                        Modifier.size(44.dp)
-                            .clickable { picker = "color" }
-                            .padding(8.dp)
-                            .background(Color(color), CircleShape),
+                    WatercolorSpot(
+                        Color(color),
+                        Modifier.size(44.dp).clickable { picker = "color" }.padding(8.dp),
                     )
                 },
             )
@@ -898,18 +908,93 @@ fun CategoryEditor(
 }
 
 @Composable
-fun ConfirmDelete(message: String, onClose: () -> Unit, onConfirm: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onClose,
-        title = { Text("Are you sure?", fontSize = 19.sp) },
-        text = { Text(message, fontSize = 14.sp) },
-        confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text("Delete", color = MaterialTheme.colorScheme.error)
-            }
-        },
-        dismissButton = { TextButton(onClick = onClose) { Text("Cancel") } },
+fun ConfirmDelete(
+    title: String,
+    onClose: () -> Unit,
+    message: String? = null,
+    onConfirm: () -> Unit,
+) {
+    FleurAlert(
+        title = title,
+        message = message,
+        onClose = onClose,
+        confirmLabel = "Delete",
+        onConfirm = onConfirm,
+        destructive = true,
     )
+}
+
+@Composable
+fun AccountActions(
+    state: BudgetState,
+    vm: BudgetViewModel,
+    account: Account,
+    onClose: () -> Unit,
+    onEdit: () -> Unit,
+) {
+    var action by rememberSaveable(account.id) { mutableStateOf("") }
+    when (action) {
+        "" ->
+            FleurActionSheet(
+                listOf(
+                    FleurAction("Edit Account", onClick = onEdit),
+                    FleurAction("Update Balance") { action = "balance" },
+                    FleurAction("Hide") {
+                        vm.change(onClose) { current ->
+                            current.copy(
+                                accounts =
+                                    current.accounts.map {
+                                        if (it.id == account.id) it.copy(hidden = true) else it
+                                    },
+                            )
+                        }
+                    },
+                    FleurAction("Delete", destructive = true) {
+                        action = if (state.accounts.size > 1) "delete" else "last-account"
+                    },
+                ),
+                onClose,
+            )
+        "balance" ->
+            TextInputDialog(
+                "Update balance",
+                moneyInput(state.accountBalance(account.id)),
+                numeric = true,
+                onClose = onClose,
+            ) { value ->
+                val target = parseMoney(value, true)
+                vm.change(onClose) { current ->
+                    val difference = Math.subtractExact(target, current.accountBalance(account.id))
+                    current.copy(
+                        accounts =
+                            current.accounts.map {
+                                if (it.id == account.id)
+                                    it.copy(initial = Math.addExact(it.initial, difference))
+                                else it
+                            },
+                    )
+                }
+            }
+        "delete" ->
+            ConfirmDelete(
+                "Delete this account?",
+                onClose,
+                message =
+                    "Deleting this account permanently deletes its transactions and transfers. Hide the account to keep its history.",
+            ) {
+                vm.change(onClose) { BudgetActions.deleteAccount(it, account.id) }
+            }
+        "last-account" ->
+            FleurAlert(
+                "Keep at least one account",
+                onClose = onClose,
+                confirmLabel = "Close",
+                onConfirm = onClose,
+                cancelLabel = null,
+                message =
+                    "Create another account before deleting this one. You can edit its name or update its balance instead.",
+            )
+    }
 }
 
 @Composable
@@ -1021,11 +1106,9 @@ fun AccountEditor(
                 "Color",
                 onClick = { picker = "color" },
                 trailing = {
-                    Box(
-                        Modifier.size(44.dp)
-                            .clickable { picker = "color" }
-                            .padding(8.dp)
-                            .background(Color(color), CircleShape),
+                    WatercolorSpot(
+                        Color(color),
+                        Modifier.size(44.dp).clickable { picker = "color" }.padding(8.dp),
                     )
                 },
             )
@@ -1127,8 +1210,10 @@ fun AccountEditor(
     }
     if (delete)
         ConfirmDelete(
-            "Deleting this account permanently deletes its transactions and transfers. Hide the account to keep its history.",
+            "Delete this account?",
             { delete = false },
+            message =
+                "Deleting this account permanently deletes its transactions and transfers. Hide the account to keep its history.",
         ) {
             vm.change(onClose) { BudgetActions.deleteAccount(it, account!!.id) }
         }

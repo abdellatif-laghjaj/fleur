@@ -3,6 +3,7 @@ package com.abdellatif.fleur.ui
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
@@ -322,7 +323,7 @@ private fun BudgetContent(
                                 state,
                                 { a ->
                                     selectedAccount = a.id
-                                    open("account")
+                                    open("account-actions")
                                 },
                                 {
                                     selectedAccount = ""
@@ -335,22 +336,26 @@ private fun BudgetContent(
                     }
                 }
                 if (tab == 0)
-                    FloatingActionButton(
-                        onClick = {
-                            if (p.haptics)
-                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            newEntry()
-                        },
-                        modifier =
-                            Modifier.align(Alignment.BottomEnd)
-                                .padding(end = 23.dp, bottom = 20.dp)
-                                .size(54.dp)
-                                .semantics { contentDescription = "Add transaction" },
-                        shape = CircleShape,
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = Color.White,
-                        elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp),
+                    Box(
+                        Modifier.align(Alignment.BottomEnd)
+                            .padding(end = 23.dp, bottom = 20.dp)
+                            .size(54.dp)
+                            .clickable(
+                                remember { MutableInteractionSource() },
+                                indication = null,
+                                role = Role.Button,
+                            ) {
+                                if (p.haptics)
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                newEntry()
+                            }
+                            .semantics { contentDescription = "Add transaction" },
+                        contentAlignment = Alignment.Center,
                     ) {
+                        WatercolorSpot(
+                            MaterialTheme.colorScheme.primary,
+                            Modifier.matchParentSize(),
+                        )
                         FleurIcon("plus", Modifier.size(33.dp), Color.White)
                     }
             }
@@ -368,9 +373,11 @@ private fun BudgetContent(
                     Column(
                         Modifier.weight(1f)
                             .fillMaxHeight()
-                            .clickable(role = Role.Tab) {
-                                if (p.haptics)
-                                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            .clickable(
+                                remember { MutableInteractionSource() },
+                                indication = null,
+                                role = Role.Tab,
+                            ) {
                                 tab = i
                             }
                             .semantics {
@@ -421,6 +428,10 @@ private fun BudgetContent(
                 accountFilters = v.accounts.toList()
                 filterPaid = v.paid
                 close()
+            }
+        "account-actions" ->
+            state.account(selectedAccount)?.let { account ->
+                AccountActions(state, vm, account, ::close, onEdit = { route = "account" })
             }
         "account" ->
             AccountEditor(

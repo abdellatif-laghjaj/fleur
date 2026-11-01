@@ -175,73 +175,64 @@ class MainActivity : ComponentActivity() {
             restoring
                 ?.takeIf { !preferences.appLock || unlocked }
                 ?.let { candidate ->
-                    AlertDialog(
-                        onDismissRequest = { restoring = null },
-                        title = { Text("Restore your budget?") },
-                        text = {
-                            Text(
+                    FleurTheme(preferences) {
+                        FleurAlert(
+                            title = "Restore your budget?",
+                            message =
                                 "This replaces the current budget with ${candidate.accounts.size} accounts and ${candidate.entries.size} transactions. A recovery copy of the current budget will be kept on this device.",
-                            )
-                        },
-                        confirmButton = {
-                            TextButton(
-                                onClick = {
-                                    val candidateSafe =
-                                        candidate.copy(
-                                            preferences =
-                                                candidate.preferences.copy(
-                                                    appLock =
-                                                        candidate.preferences.appLock &&
-                                                            getSystemService(
-                                                                    KeyguardManager::class.java,
-                                                                )
-                                                                .isDeviceSecure,
-                                                ),
-                                        )
-                                    lifecycleScope.launch {
-                                        try {
-                                            val before =
-                                                vm.state.value ?: error("Budget is still loading")
-                                            withContext(Dispatchers.IO) {
-                                                val file =
-                                                    android.util.AtomicFile(
-                                                        java.io.File(
-                                                            filesDir,
-                                                            "before-restore.json",
-                                                        ),
-                                                    )
-                                                val output = file.startWrite()
-                                                try {
-                                                    output.write(
-                                                        StateCodec.encode(before).toByteArray(),
-                                                    )
-                                                    file.finishWrite(output)
-                                                } catch (e: Exception) {
-                                                    file.failWrite(output)
-                                                    throw e
-                                                }
+                            onClose = { restoring = null },
+                            confirmLabel = "Restore",
+                            onConfirm = {
+                                val candidateSafe =
+                                    candidate.copy(
+                                        preferences =
+                                            candidate.preferences.copy(
+                                                appLock =
+                                                    candidate.preferences.appLock &&
+                                                        getSystemService(
+                                                                KeyguardManager::class.java,
+                                                            )
+                                                            .isDeviceSecure,
+                                            ),
+                                    )
+                                lifecycleScope.launch {
+                                    try {
+                                        val before =
+                                            vm.state.value ?: error("Budget is still loading")
+                                        withContext(Dispatchers.IO) {
+                                            val file =
+                                                android.util.AtomicFile(
+                                                    java.io.File(
+                                                        filesDir,
+                                                        "before-restore.json",
+                                                    ),
+                                                )
+                                            val output = file.startWrite()
+                                            try {
+                                                output.write(
+                                                    StateCodec.encode(before).toByteArray(),
+                                                )
+                                                file.finishWrite(output)
+                                            } catch (e: Exception) {
+                                                file.failWrite(output)
+                                                throw e
                                             }
-                                            vm.change(
-                                                {
-                                                    restoring = null
-                                                    message("Backup restored")
-                                                },
-                                            ) {
-                                                candidateSafe
-                                            }
-                                        } catch (e: Exception) {
-                                            message(e.message ?: "Restore failed")
                                         }
+                                        vm.change(
+                                            {
+                                                restoring = null
+                                                message("Backup restored")
+                                            },
+                                        ) {
+                                            candidateSafe
+                                        }
+                                    } catch (e: Exception) {
+                                        message(e.message ?: "Restore failed")
                                     }
-                                },
-                            ) {
-                                Text("Restore")
-                            }
-                        },
-                        dismissButton = {
-                            TextButton(onClick = { restoring = null }) { Text("Cancel") }
-                        },
-                    )
+                                }
+                            },
+                        )
+                    }
                 }
         }
     }
