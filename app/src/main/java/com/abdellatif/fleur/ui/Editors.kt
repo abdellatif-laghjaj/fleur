@@ -82,26 +82,11 @@ fun ChoiceDialog(
     onClose: () -> Unit,
     onSelect: (String) -> Unit,
 ) {
-    AlertDialog(
-        onDismissRequest = onClose,
-        title = { Text(title, fontSize = 19.sp) },
-        text = {
-            Column(Modifier.verticalScroll(rememberScrollState())) {
-                choices.forEach { choice ->
-                    Row(
-                        Modifier.fillMaxWidth()
-                            .clickable { onSelect(choice) }
-                            .padding(vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(choice, Modifier.weight(1f), fontSize = 14.sp)
-                        if (choice == selected)
-                            FleurIcon("check", tint = MaterialTheme.colorScheme.primary)
-                    }
-                }
-            }
-        },
-        confirmButton = { TextButton(onClick = onClose) { Text("Cancel") } },
+    FleurActionSheet(
+        actions = choices.map { choice -> FleurAction(choice) { onSelect(choice) } },
+        onClose = onClose,
+        title = title,
+        selected = selected,
     )
 }
 
@@ -114,24 +99,39 @@ fun TextInputDialog(
     onSave: (String) -> Unit,
 ) {
     var value by rememberSaveable { mutableStateOf(initial) }
-    AlertDialog(
-        onDismissRequest = onClose,
-        title = { Text(title, fontSize = 19.sp) },
-        text = {
-            OutlinedTextField(
-                value,
-                { value = it },
-                singleLine = true,
-                keyboardOptions =
-                    KeyboardOptions(
-                        keyboardType = if (numeric) KeyboardType.Decimal else KeyboardType.Text,
-                    ),
-                modifier = Modifier.fillMaxWidth(),
-            )
+    var error by remember { mutableStateOf<String?>(null) }
+    FleurAlert(
+        title = title,
+        onClose = onClose,
+        confirmLabel = "Save",
+        onConfirm = {
+            try {
+                onSave(value)
+            } catch (e: IllegalArgumentException) {
+                error = e.message
+            }
         },
-        confirmButton = { TextButton(onClick = { onSave(value) }) { Text("Save") } },
-        dismissButton = { TextButton(onClick = onClose) { Text("Cancel") } },
-    )
+    ) {
+        FleurInput(
+            value,
+            { value = it },
+            label = title,
+            showLabel = false,
+            modifier = Modifier.fillMaxWidth(),
+            keyboardOptions =
+                KeyboardOptions(
+                    keyboardType = if (numeric) KeyboardType.Decimal else KeyboardType.Text,
+                ),
+        )
+
+        if (error != null)
+            Text(
+                error!!,
+                color = FleurDestructive,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(top = 8.dp),
+            )
+    }
 }
 
 @Composable
@@ -301,6 +301,8 @@ fun TransactionEditor(
                             )
                         inner()
                     },
+                    cursorBrush =
+                        androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.primary),
                 )
             }
             if (error != null)
@@ -359,6 +361,8 @@ fun TransactionEditor(
                         Text("Notes", color = MaterialTheme.colorScheme.outline, fontSize = 13.sp)
                     inner()
                 },
+                cursorBrush =
+                    androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.primary),
             )
             if (editing != null)
                 TextButton(
@@ -428,7 +432,7 @@ fun TransactionEditor(
                 )
             }
         else
-            ConfirmDelete("Delete this transaction?", { deleteScope = false }) {
+            ConfirmDelete("Do you want to delete this transaction?", { deleteScope = false }) {
                 vm.deleteEntry(editing!!, SeriesScope.ONLY, onClose)
             }
     }
@@ -479,11 +483,11 @@ fun RepeatEditor(
                 chooseFrequency = true
             }
             if (frequency != Frequency.NONE) {
-                OutlinedTextField(
+                FleurInput(
                     interval,
                     { interval = it },
-                    label = { Text("Every") },
-                    suffix = {
+                    label = "Every",
+                    trailing = {
                         Text(
                             when (frequency) {
                                 Frequency.DAILY -> "day(s)"
@@ -495,7 +499,6 @@ fun RepeatEditor(
                         )
                     },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    singleLine = true,
                     modifier = Modifier.fillMaxWidth().padding(vertical = 15.dp),
                 )
                 if (frequency in listOf(Frequency.WEEKLY, Frequency.FORTNIGHTLY)) {
@@ -595,6 +598,8 @@ fun CategoryPicker(
                         Text("Search", fontSize = 12.sp, color = MaterialTheme.colorScheme.outline)
                     inner()
                 },
+                cursorBrush =
+                    androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.primary),
             )
         }
         LazyVerticalGrid(
@@ -720,34 +725,35 @@ private val FleurColorNames =
 
 @Composable
 fun ColorPicker(current: Long, onSelect: (Long) -> Unit, onClose: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onClose,
-        title = { Text("Choose a color") },
-        text = {
-            Column {
-                FleurColors.chunked(5).forEach { row ->
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                        row.forEach { color ->
-                            Box(
-                                Modifier.padding(5.dp)
-                                    .size(44.dp)
-                                    .background(Color(color), CircleShape)
-                                    .clickable { onSelect(color) }
-                                    .semantics {
-                                        contentDescription =
-                                            FleurColorNames[FleurColors.indexOf(color)] + " color"
-                                    },
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                if (current == color) FleurIcon("check", tint = Color.White)
-                            }
+    FleurAlert(
+        title = "Choose a color",
+        onClose = onClose,
+        confirmLabel = "Close",
+        onConfirm = onClose,
+        cancelLabel = null,
+    ) {
+        Column {
+            FleurColors.chunked(5).forEach { row ->
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                    row.forEach { color ->
+                        Box(
+                            Modifier.padding(3.dp)
+                                .size(44.dp)
+                                .clickable(onClick = { onSelect(color) })
+                                .semantics {
+                                    contentDescription =
+                                        FleurColorNames[FleurColors.indexOf(color)] + " color"
+                                },
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            WatercolorSpot(Color(color), Modifier.matchParentSize())
+                            if (current == color) FleurIcon("check", tint = Color.White)
                         }
                     }
                 }
             }
-        },
-        confirmButton = { TextButton(onClick = onClose) { Text("Close") } },
-    )
+        }
+    }
 }
 
 @Composable
@@ -755,11 +761,11 @@ fun IconPicker(onSelect: (String) -> Unit, onClose: () -> Unit) {
     var search by rememberSaveable { mutableStateOf("") }
     PaperDialog(onClose) {
         SheetTopBar("Choose an icon", onClose)
-        OutlinedTextField(
+        FleurInput(
             search,
             { search = it },
-            placeholder = { Text("Search icons") },
-            singleLine = true,
+            label = "Search icons",
+            showLabel = false,
             modifier = Modifier.fillMaxWidth().padding(20.dp),
         )
         LazyVerticalGrid(
@@ -824,12 +830,16 @@ fun CategoryEditor(
             ) {
                 CategoryBadge(icon, color, size = 58.dp)
             }
-            OutlinedTextField(
+            FleurInput(
                 name,
                 { if (it.length <= 100) name = it },
-                label = { Text("Name") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth().padding(bottom = 14.dp),
+                label = "Name",
+                centered = true,
+                showLabel = false,
+                modifier =
+                    Modifier.align(Alignment.CenterHorizontally)
+                        .fillMaxWidth(.6f)
+                        .padding(bottom = 24.dp),
             )
             FormRow("Type", type.name.lowercase().replaceFirstChar { it.uppercase() }) {
                 picker = "type"
@@ -844,11 +854,9 @@ fun CategoryEditor(
                 "Color",
                 onClick = { picker = "color" },
                 trailing = {
-                    Box(
-                        Modifier.size(44.dp)
-                            .clickable { picker = "color" }
-                            .padding(8.dp)
-                            .background(Color(color), CircleShape),
+                    WatercolorSpot(
+                        Color(color),
+                        Modifier.size(44.dp).clickable { picker = "color" }.padding(8.dp),
                     )
                 },
             )
@@ -898,18 +906,93 @@ fun CategoryEditor(
 }
 
 @Composable
-fun ConfirmDelete(message: String, onClose: () -> Unit, onConfirm: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onClose,
-        title = { Text("Are you sure?", fontSize = 19.sp) },
-        text = { Text(message, fontSize = 14.sp) },
-        confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text("Delete", color = MaterialTheme.colorScheme.error)
-            }
-        },
-        dismissButton = { TextButton(onClick = onClose) { Text("Cancel") } },
+fun ConfirmDelete(
+    title: String,
+    onClose: () -> Unit,
+    message: String? = null,
+    onConfirm: () -> Unit,
+) {
+    FleurAlert(
+        title = title,
+        message = message,
+        onClose = onClose,
+        confirmLabel = "Delete",
+        onConfirm = onConfirm,
+        destructive = true,
     )
+}
+
+@Composable
+fun AccountActions(
+    state: BudgetState,
+    vm: BudgetViewModel,
+    account: Account,
+    onClose: () -> Unit,
+    onEdit: () -> Unit,
+) {
+    var action by rememberSaveable(account.id) { mutableStateOf("") }
+    when (action) {
+        "" ->
+            FleurActionSheet(
+                listOf(
+                    FleurAction("Edit Account", onClick = onEdit),
+                    FleurAction("Update Balance") { action = "balance" },
+                    FleurAction("Hide") {
+                        vm.change(onClose) { current ->
+                            current.copy(
+                                accounts =
+                                    current.accounts.map {
+                                        if (it.id == account.id) it.copy(hidden = true) else it
+                                    },
+                            )
+                        }
+                    },
+                    FleurAction("Delete", destructive = true) {
+                        action = if (state.accounts.size > 1) "delete" else "last-account"
+                    },
+                ),
+                onClose,
+            )
+        "balance" ->
+            TextInputDialog(
+                "Update balance",
+                moneyInput(state.accountBalance(account.id)),
+                numeric = true,
+                onClose = onClose,
+            ) { value ->
+                val target = parseMoney(value, true)
+                vm.change(onClose) { current ->
+                    val difference = Math.subtractExact(target, current.accountBalance(account.id))
+                    current.copy(
+                        accounts =
+                            current.accounts.map {
+                                if (it.id == account.id)
+                                    it.copy(initial = Math.addExact(it.initial, difference))
+                                else it
+                            },
+                    )
+                }
+            }
+        "delete" ->
+            ConfirmDelete(
+                "Delete this account?",
+                onClose,
+                message =
+                    "Deleting this account permanently deletes its transactions and transfers. Hide the account to keep its history.",
+            ) {
+                vm.change(onClose) { BudgetActions.deleteAccount(it, account.id) }
+            }
+        "last-account" ->
+            FleurAlert(
+                "Keep at least one account",
+                onClose = onClose,
+                confirmLabel = "Close",
+                onConfirm = onClose,
+                cancelLabel = null,
+                message =
+                    "Create another account before deleting this one. You can edit its name or update its balance instead.",
+            )
+    }
 }
 
 @Composable
@@ -968,41 +1051,34 @@ fun AccountEditor(
         Column(
             Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 24.dp),
         ) {
-            Box(
-                Modifier.fillMaxWidth().padding(vertical = 20.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                CategoryBadge(icon, color, size = 54.dp)
-            }
-            OutlinedTextField(
+            FleurInput(
                 name,
                 { if (it.length <= 100) name = it },
-                label = { Text("Name") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+                label = "Name",
+                centered = true,
+                showLabel = false,
+                modifier =
+                    Modifier.align(Alignment.CenterHorizontally)
+                        .fillMaxWidth(.6f)
+                        .padding(top = 30.dp, bottom = 28.dp),
             )
             FormRow("Account type", type.name.lowercase().replaceFirstChar { it.uppercase() }) {
                 picker = "type"
             }
-            OutlinedTextField(
+            FleurInput(
                 initial,
                 { initial = it },
-                label = {
-                    Text(
-                        if (type == AccountType.DEBT && account == null) "Initial debt amount"
-                        else "Initial balance",
-                    )
-                },
-                singleLine = true,
+                label =
+                    if (type == AccountType.DEBT && account == null) "Initial debt amount"
+                    else "Initial balance",
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
             )
             if (type != AccountType.SPENDING)
-                OutlinedTextField(
+                FleurInput(
                     goal,
                     { goal = it },
-                    label = { Text(if (type == AccountType.DEBT) "Debt limit" else "Goal amount") },
-                    singleLine = true,
+                    label = if (type == AccountType.DEBT) "Debt limit" else "Goal amount",
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
                 )
@@ -1021,11 +1097,9 @@ fun AccountEditor(
                 "Color",
                 onClick = { picker = "color" },
                 trailing = {
-                    Box(
-                        Modifier.size(44.dp)
-                            .clickable { picker = "color" }
-                            .padding(8.dp)
-                            .background(Color(color), CircleShape),
+                    WatercolorSpot(
+                        Color(color),
+                        Modifier.size(44.dp).clickable { picker = "color" }.padding(8.dp),
                     )
                 },
             )
@@ -1127,8 +1201,10 @@ fun AccountEditor(
     }
     if (delete)
         ConfirmDelete(
-            "Deleting this account permanently deletes its transactions and transfers. Hide the account to keep its history.",
+            "Delete this account?",
             { delete = false },
+            message =
+                "Deleting this account permanently deletes its transactions and transfers. Hide the account to keep its history.",
         ) {
             vm.change(onClose) { BudgetActions.deleteAccount(it, account!!.id) }
         }
@@ -1213,12 +1289,11 @@ fun BudgetEditor(state: BudgetState, vm: BudgetViewModel, onClose: () -> Unit) {
                     color = MaterialTheme.colorScheme.outline,
                     modifier = Modifier.padding(bottom = 20.dp),
                 )
-                OutlinedTextField(
+                FleurInput(
                     overall,
                     { overall = it },
-                    label = { Text("Overall budget") },
+                    label = "Overall budget",
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    singleLine = true,
                     modifier = Modifier.fillMaxWidth().padding(bottom = 20.dp),
                 )
             }
@@ -1241,13 +1316,13 @@ fun BudgetEditor(state: BudgetState, vm: BudgetViewModel, onClose: () -> Unit) {
                 ) {
                     CategoryBadge(c.icon, c.color)
                     Text(c.name, Modifier.weight(1f).padding(horizontal = 12.dp), fontSize = 13.sp)
-                    OutlinedTextField(
+                    FleurInput(
                         limits[c.id] ?: "0",
                         { limits[c.id] = it },
-                        singleLine = true,
+                        label = "${c.name} budget",
+                        showLabel = false,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         modifier = Modifier.width(115.dp),
-                        textStyle = TextStyle(fontSize = 13.sp),
                     )
                 }
             }

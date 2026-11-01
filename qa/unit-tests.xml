@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.abdellatif.fleur.BudgetLogicTest" tests="10" skipped="0" failures="0" errors="0" timestamp="2026-11-01T14:51:05.848Z" hostname="DESKTOP-MHA3QJJ" time="2.238">
+<testsuite name="com.abdellatif.fleur.BudgetLogicTest" tests="10" skipped="0" failures="0" errors="0" timestamp="2026-11-01T22:22:26.155Z" hostname="DESKTOP-MHA3QJJ" time="0.269">
   <properties/>
-  <testcase name="followingSeriesEditPreservesPast" classname="com.abdellatif.fleur.BudgetLogicTest" time="0.81"/>
-  <testcase name="moneyIsExactAndRejectsAmbiguousOrExcessPrecision" classname="com.abdellatif.fleur.BudgetLogicTest" time="0.361"/>
-  <testcase name="transfersKeepNetWorthAndDebtRepaymentOutOfSpending" classname="com.abdellatif.fleur.BudgetLogicTest" time="0.014"/>
-  <testcase name="reorderingChangesOrderWithoutChangingIdentityOrAmounts" classname="com.abdellatif.fleur.BudgetLogicTest" time="0.062"/>
-  <testcase name="monthStartClampsAndRangesRemainContinuous" classname="com.abdellatif.fleur.BudgetLogicTest" time="0.018"/>
-  <testcase name="customWeeksUseCalendarWeeksAndSelectedDays" classname="com.abdellatif.fleur.BudgetLogicTest" time="0.043"/>
-  <testcase name="deletingAccountDoesNotResurrectAnOccurrenceMovedToThatAccount" classname="com.abdellatif.fleur.BudgetLogicTest" time="0.004"/>
-  <testcase name="optimizedRepeatCountsAndDatesMatchDayByDayRules" classname="com.abdellatif.fleur.BudgetLogicTest" time="0.867"/>
-  <testcase name="monthlyRepeatClampsWithoutDriftingAndHonorsEndDate" classname="com.abdellatif.fleur.BudgetLogicTest" time="0.004"/>
+  <testcase name="followingSeriesEditPreservesPast" classname="com.abdellatif.fleur.BudgetLogicTest" time="0.068"/>
+  <testcase name="moneyIsExactAndRejectsAmbiguousOrExcessPrecision" classname="com.abdellatif.fleur.BudgetLogicTest" time="0.028"/>
+  <testcase name="transfersKeepNetWorthAndDebtRepaymentOutOfSpending" classname="com.abdellatif.fleur.BudgetLogicTest" time="0.001"/>
+  <testcase name="reorderingChangesOrderWithoutChangingIdentityOrAmounts" classname="com.abdellatif.fleur.BudgetLogicTest" time="0.008"/>
+  <testcase name="monthStartClampsAndRangesRemainContinuous" classname="com.abdellatif.fleur.BudgetLogicTest" time="0.001"/>
+  <testcase name="customWeeksUseCalendarWeeksAndSelectedDays" classname="com.abdellatif.fleur.BudgetLogicTest" time="0.007"/>
+  <testcase name="deletingAccountDoesNotResurrectAnOccurrenceMovedToThatAccount" classname="com.abdellatif.fleur.BudgetLogicTest" time="0.001"/>
+  <testcase name="optimizedRepeatCountsAndDatesMatchDayByDayRules" classname="com.abdellatif.fleur.BudgetLogicTest" time="0.14"/>
+  <testcase name="monthlyRepeatClampsWithoutDriftingAndHonorsEndDate" classname="com.abdellatif.fleur.BudgetLogicTest" time="0.001"/>
   <testcase name="singleRecurringOccurrenceCanMoveAndBeDeletedWithoutChangingSeries" classname="com.abdellatif.fleur.BudgetLogicTest" time="0.001"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>

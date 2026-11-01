@@ -1,6 +1,8 @@
 package com.abdellatif.fleur
 
 import android.app.Application
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.lifecycle.ViewModelStore
@@ -61,7 +63,9 @@ class BudgetWorkflowTest {
         assertEquals(47470L, vm.state.value!!.accountBalance("default"))
         compose.onNodeWithContentDescription("Transactions").performClick()
         compose.onNodeWithContentDescription("Search transactions").performClick()
-        compose.onNodeWithText("Search transactions").performTextInput("Weekly market")
+        compose
+            .onNode(hasContentDescription("Search transactions") and hasSetTextAction())
+            .performTextInput("Weekly market")
         compose.onNode(hasText("Weekly market") and hasSetTextAction().not()).assertIsDisplayed()
         compose.onNodeWithText("November paycheck").assertDoesNotExist()
         compose.onNodeWithContentDescription("Clear search").performClick()
@@ -85,16 +89,216 @@ class BudgetWorkflowTest {
     }
 
     @Test
+    fun centeredAccountNameInputSavesInBothThemes() {
+        compose.runOnIdle {
+            vm.change { seed ->
+                seed.copy(
+                    accounts = seed.accounts.map { it.copy(initial = 3456) },
+                    preferences = seed.preferences.copy(darkMode = "Light"),
+                )
+            }
+        }
+        compose.waitUntil(10000) { vm.state.value!!.preferences.darkMode == "Light" }
+        compose.onNodeWithContentDescription("Accounts").performClick()
+        compose.onNodeWithText("Cash").performClick()
+        compose.onNodeWithText("Edit Account").performClick()
+        val name = compose.onNodeWithContentDescription("Name")
+        assertTrue(
+            name.fetchSemanticsNode().size.width <
+                application.resources.displayMetrics.widthPixels * .7f,
+        )
+        name.performTextReplacement("Main")
+        name.performImeAction()
+        screenshot("18-account-input-light.png")
+        assertEquals("Cash", vm.state.value!!.accounts.single().name)
+        compose.onNodeWithText("Save").performClick()
+        compose.waitUntil(10000) { vm.state.value!!.accounts.single().name == "Main" }
+        compose.onNodeWithText("Main").performClick()
+        compose.onNodeWithText("Edit Account").performClick()
+        compose.runOnIdle { vm.preferences { it.copy(darkMode = "Dark") } }
+        compose.waitUntil(10000) { vm.state.value!!.preferences.darkMode == "Dark" }
+        compose.onNodeWithContentDescription("Name").performTextReplacement("Main wallet")
+        compose.onNodeWithContentDescription("Name").performImeAction()
+        screenshot("19-account-input-dark.png")
+        compose.onNodeWithText("Save").performClick()
+        compose.waitUntil(10000) { vm.state.value!!.accounts.single().name == "Main wallet" }
+        assertEquals(3456L, vm.state.value!!.accountBalance("default"))
+    }
+
+    @Test
+    fun accountActionSheetUpdatesBalanceAndConfirmsDeletionInBothThemes() {
+        compose.runOnIdle {
+            vm.change { seed ->
+                seed.copy(
+                    accounts =
+                        listOf(
+                            Account("default", "Cash", initial = 10000),
+                            Account("savings", "Savings", AccountType.SAVINGS, initial = 20000),
+                        ),
+                    entries =
+                        listOf(
+                            Entry(
+                                type = EntryType.EXPENSE,
+                                amount = 2500,
+                                categoryId =
+                                    seed.categories.first { it.type == EntryType.EXPENSE }.id,
+                                accountId = "default",
+                            ),
+                        ),
+                    preferences = seed.preferences.copy(darkMode = "Light"),
+                )
+            }
+        }
+        compose.waitUntil(10000) { vm.state.value!!.accounts.size == 2 }
+        compose.onNodeWithContentDescription("Accounts").performClick()
+        compose.onNodeWithText("Cash").performClick()
+        compose.onNodeWithTag("fleur-action-sheet").assertIsDisplayed()
+        compose.onNodeWithText("Edit Account").assertIsDisplayed()
+        screenshot("11-account-actions-light.png")
+        compose.onNodeWithText("Cancel").performClick()
+        assertEquals(7500L, vm.state.value!!.accountBalance("default"))
+        compose.onNodeWithText("Cash").performClick()
+        compose.onNodeWithText("Update Balance").performClick()
+        compose.onNodeWithContentDescription("Update balance").performTextReplacement("1.001")
+        compose.onNodeWithText("Save").performClick()
+        compose.onNodeWithTag("fleur-alert").assertIsDisplayed()
+        assertEquals(7500L, vm.state.value!!.accountBalance("default"))
+        compose.onNodeWithContentDescription("Update balance").performTextReplacement("95.25")
+        compose.onNodeWithText("Save").performClick()
+        compose.waitUntil(10000) { vm.state.value!!.accountBalance("default") == 9525L }
+        assertEquals(2500L, vm.state.value!!.entries.single().amount)
+        assertEquals(20000L, vm.state.value!!.accountBalance("savings"))
+        compose.onNodeWithText("Cash").performClick()
+        compose.onNodeWithText("Hide").performClick()
+        compose.waitUntil(10000) { vm.state.value!!.account("default")!!.hidden }
+        compose.onNodeWithText("Cash").assertDoesNotExist()
+        compose.onNodeWithText("Savings").performClick()
+        compose.runOnIdle { vm.preferences { it.copy(darkMode = "Dark") } }
+        compose.waitUntil(10000) { vm.state.value!!.preferences.darkMode == "Dark" }
+        screenshot("12-account-actions-dark.png")
+        compose.onNodeWithText("Edit Account").performClick()
+        compose.onNodeWithText("Color", useUnmergedTree = true).performScrollTo().performClick()
+        screenshot("14-color-picker-dark.png")
+        compose.onNodeWithText("Close").performClick()
+        compose.onNodeWithContentDescription("Close").performClick()
+        compose.onNodeWithText("Savings").performClick()
+        compose.onNodeWithText("Delete").performClick()
+        compose.onNodeWithTag("fleur-alert").assertIsDisplayed()
+        screenshot("13-delete-account-dark.png")
+        compose.onNodeWithText("Cancel").performClick()
+        assertEquals(2, vm.state.value!!.accounts.size)
+        compose.onNodeWithText("Savings").performClick()
+        compose.onNodeWithText("Delete").performClick()
+        compose.onNodeWithText("Delete").performClick()
+        compose.waitUntil(10000) { vm.state.value!!.accounts.size == 1 }
+        assertEquals(9525L, vm.state.value!!.accountBalance("default"))
+        assertEquals(1, vm.state.value!!.entries.size)
+        compose.runOnIdle {
+            vm.change { current ->
+                current.copy(
+                    accounts = current.accounts.map { it.copy(hidden = false) },
+                )
+            }
+        }
+        compose.waitUntil(10000) { !vm.state.value!!.account("default")!!.hidden }
+        compose.onNodeWithText("Cash").performClick()
+        compose.onNodeWithText("Delete").performClick()
+        compose.onNodeWithText("Keep at least one account").assertIsDisplayed()
+        compose.onNodeWithText("Close").performClick()
+        assertEquals(1, vm.state.value!!.accounts.size)
+        assertEquals(1, vm.state.value!!.entries.size)
+    }
+
+    @Test
+    fun navigationHasNoPressedRippleAndStillSelectsTabs() {
+        val home = compose.onNodeWithContentDescription("Home")
+        compose.waitForIdle()
+        val before = home.captureToImage().asAndroidBitmap()
+        home.performTouchInput { down(center) }
+        compose.mainClock.advanceTimeBy(200)
+        val pressed = home.captureToImage().asAndroidBitmap()
+        home.performTouchInput { up() }
+        assertTrue("Tab background should not draw a press ripple", before.sameAs(pressed))
+        compose.onNodeWithContentDescription("Insights").performClick().assertIsSelected()
+        compose.onNodeWithContentDescription("Transactions").performClick().assertIsSelected()
+        compose.onNodeWithContentDescription("Accounts").performClick().assertIsSelected()
+        home.performClick().assertIsSelected()
+    }
+
+    @Test
+    fun tabSwitchHasNoOutgoingPageAfterTheFirstFrame() {
+        compose.onNodeWithText("Add income").assertIsDisplayed()
+        compose.mainClock.autoAdvance = false
+        try {
+            compose.onNodeWithContentDescription("Accounts").performClick()
+            compose.mainClock.advanceTimeByFrame()
+            compose.onNodeWithText("NET WORTH").assertIsDisplayed()
+            compose.onNodeWithText("Add income").assertDoesNotExist()
+            compose.onNodeWithContentDescription("Home").performClick()
+            compose.mainClock.advanceTimeByFrame()
+            compose.onNodeWithText("Add income").assertIsDisplayed()
+            compose.onNodeWithText("NET WORTH").assertDoesNotExist()
+        } finally {
+            compose.mainClock.autoAdvance = true
+        }
+    }
+
+    @Test
+    fun tabSwitchPreservesInsightSelectionAndTransactionScroll() {
+        compose.runOnIdle {
+            vm.change { state ->
+                state.copy(
+                    entries =
+                        List(60) { i ->
+                            Entry(
+                                id = "scroll-$i",
+                                type = EntryType.EXPENSE,
+                                amount = 100,
+                                categoryId =
+                                    state.categories.first { it.type == EntryType.EXPENSE }.id,
+                                accountId = "default",
+                                notes = "Scroll entry $i",
+                                createdAt = i.toLong(),
+                            )
+                        },
+                )
+            }
+        }
+        compose.waitUntil(10000) { vm.state.value!!.entries.size == 60 }
+        compose.onNodeWithContentDescription("Insights").performClick()
+        compose.waitUntil(10000) {
+            compose.onAllNodesWithText("INCOME").fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithText("INCOME").performClick()
+        compose.onNodeWithText("No income transactions in this time period.").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Accounts").performClick()
+        compose.onNodeWithContentDescription("Insights").performClick()
+        compose.onNodeWithText("No income transactions in this time period.").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Transactions").performClick()
+        val list = compose.onNode(hasScrollToIndexAction())
+        list.performScrollToNode(hasText("Scroll entry 0"))
+        val before =
+            list.fetchSemanticsNode().config[SemanticsProperties.VerticalScrollAxisRange].value()
+        assertTrue(before > 0)
+        compose.onNodeWithContentDescription("Home").performClick()
+        compose.onNodeWithContentDescription("Transactions").performClick()
+        compose.onNodeWithText("Scroll entry 0").assertIsDisplayed()
+        val after =
+            list.fetchSemanticsNode().config[SemanticsProperties.VerticalScrollAxisRange].value()
+        assertEquals(before, after, .01f)
+    }
+
+    @Test
     fun savingsAccountAndTransferPreserveCombinedBalance() {
         compose.onNodeWithContentDescription("Accounts").performClick()
         compose.onNodeWithText("+  Create new account").performClick()
-        compose.onNodeWithText("Name").performTextInput("Savings")
+        compose.onNodeWithContentDescription("Name").performTextInput("Savings")
         compose.onNodeWithText("Account type").performClick()
         compose
             .onNode(hasText("Savings") and hasSetTextAction().not(), useUnmergedTree = true)
             .performClick()
-        compose.onNodeWithText("Initial balance").performTextReplacement("100")
-        compose.onNodeWithText("Goal amount").performTextReplacement("1000")
+        compose.onNodeWithContentDescription("Initial balance").performTextReplacement("100")
+        compose.onNodeWithContentDescription("Goal amount").performTextReplacement("1000")
         compose.onNodeWithText("Save").performClick()
         compose.waitUntil(10000) { vm.state.value!!.accounts.size == 2 }
         compose.onNodeWithContentDescription("Home").performClick()
@@ -126,11 +330,12 @@ class BudgetWorkflowTest {
         compose.onNodeWithContentDescription("Open settings").performClick()
         compose.onNodeWithText("Categories").performClick()
         compose.onNodeWithText("+ New").performClick()
-        compose.onNodeWithText("Name").performTextInput("Books")
+        compose.onNodeWithContentDescription("Name").performTextInput("Books")
         compose.onNodeWithContentDescription("Choose icon").performClick()
-        compose.onNodeWithText("Search icons").performTextInput("book")
+        compose.onNodeWithContentDescription("Search icons").performTextInput("book")
         compose.onNodeWithContentDescription("Book").performClick()
         compose.onNodeWithText("Color", useUnmergedTree = true).performClick()
+        screenshot("15-color-picker-light.png")
         compose.onNodeWithContentDescription("Sky color").performClick()
         compose.onAllNodesWithText("Save").onLast().performClick()
         compose.waitUntil(10000) { vm.state.value!!.categories.any { it.name == "Books" } }
@@ -139,7 +344,7 @@ class BudgetWorkflowTest {
         assertEquals(0xFF85B9D9, vm.state.value!!.category(id)!!.color)
         compose.onAllNodes(hasScrollToIndexAction()).onLast().performScrollToNode(hasText("Books"))
         compose.onNodeWithText("Books").performClick()
-        compose.onNodeWithText("Name").performTextReplacement("Bookshop")
+        compose.onNodeWithContentDescription("Name").performTextReplacement("Bookshop")
         compose.onAllNodesWithText("Save").onLast().performClick()
         compose.waitUntil(10000) { vm.state.value!!.category(id)?.name == "Bookshop" }
         compose
@@ -335,7 +540,7 @@ class BudgetWorkflowTest {
         compose.waitUntil(10000) { vm.state.value!!.entries.size == 8 }
         screenshot("01-home.png")
         compose.onNodeWithContentDescription("Open budget").performClick()
-        compose.onNodeWithText("Overall budget").performTextReplacement("1300")
+        compose.onNodeWithContentDescription("Overall budget").performTextReplacement("1300")
         compose.onNodeWithText("Save").performClick()
         compose.waitUntil(10000) { vm.state.value!!.preferences.overallBudget == 130000L }
         compose.onNodeWithContentDescription("Insights").performClick()

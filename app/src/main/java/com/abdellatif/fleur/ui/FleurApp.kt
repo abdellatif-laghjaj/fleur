@@ -1,13 +1,14 @@
 package com.abdellatif.fleur.ui
 
-import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -25,6 +26,8 @@ import com.abdellatif.fleur.data.*
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @Composable
 fun FleurApp(
@@ -97,6 +100,45 @@ private fun BudgetContent(
         else periodRange(anchor, period, p)
     val filter =
         TransactionFilter(filterType, categoryFilters.toSet(), accountFilters.toSet(), filterPaid)
+    val tabState = rememberSaveableStateHolder()
+    val today = LocalDate.now()
+    val calculatedData by
+        produceState<BudgetScreenData?>(null, state, range, today) {
+            value =
+                withContext(Dispatchers.Default) {
+                    BudgetScreenData(
+                        source = state,
+                        range = range,
+                        today = today,
+                        occurrences = state.occurrences(range.start, range.end),
+                        balances =
+                            state.accounts.associate {
+                                it.id to state.accountBalance(it.id, today)
+                            },
+                        carryOver =
+                            if (p.carryOver)
+                                state.accounts.associate {
+                                    it.id to
+                                        state.accountBalance(
+                                            it.id,
+                                            range.start.minusDays(1),
+                                        )
+                                }
+                            else emptyMap(),
+                        periodBalances =
+                            if (p.showDebt)
+                                state.accounts
+                                    .filter { it.type == AccountType.DEBT }
+                                    .associate {
+                                        it.id to state.accountBalance(it.id, range.end)
+                                    }
+                            else emptyMap(),
+                    )
+                }
+        }
+    val screenData = calculatedData?.takeIf {
+        it.source === state && it.range == range && it.today == today
+    }
     val snackbar = remember { SnackbarHostState() }
     val haptic = LocalHapticFeedback.current
     LaunchedEffect(vm) { vm.errors.collect { snackbar.showSnackbar(it) } }
@@ -238,13 +280,13 @@ private fun BudgetContent(
                 } else SmallIconButton("settings", "Open settings", { open("settings") })
             }
             if (tab == 2 && searchVisible)
-                OutlinedTextField(
+                FleurInput(
                     query,
                     { query = it },
-                    placeholder = { Text("Search transactions", fontSize = 12.sp) },
-                    singleLine = true,
+                    label = "Search transactions",
+                    showLabel = false,
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp),
-                    trailingIcon = {
+                    trailing = {
                         SmallIconButton(
                             "close",
                             "Clear search",
@@ -294,63 +336,84 @@ private fun BudgetContent(
                     }
                 }
             Box(Modifier.weight(1f)) {
-                Crossfade(tab, label = "tab", modifier = Modifier.fillMaxSize()) { current ->
-                    when (current) {
-                        0 ->
-                            HomeScreen(
-                                state,
-                                range,
-                                accountFilters.toSet(),
-                                ::category,
-                                { newEntry(it) },
-                                { open("budget") },
-                            )
-                        1 -> InsightsScreen(state, range, accountFilters.toSet(), ::category)
-                        2 ->
-                            TransactionsScreen(
-                                state,
-                                range,
-                                filter,
-                                query,
-                                calendar,
-                                ::edit,
-                                vm::togglePaid,
-                                { newEntry(date = it) },
-                            )
-                        3 ->
-                            AccountsScreen(
-                                state,
-                                { a ->
-                                    selectedAccount = a.id
-                                    open("account")
-                                },
-                                {
-                                    selectedAccount = ""
-                                    open("account")
-                                },
-                                { from, to ->
-                                    vm.change { BudgetActions.reorderAccounts(it, from, to) }
-                                },
-                            )
+                if (screenData == null) {
+                    CircularProgressIndicator(
+                        Modifier.align(Alignment.Center).size(24.dp),
+                        strokeWidth = 2.dp,
+                    )
+                } else
+                    tabState.SaveableStateProvider(tab) {
+                        when (tab) {
+                            0 ->
+                                HomeScreen(
+                                    state,
+                                    accountFilters.toSet(),
+                                    screenData.occurrences,
+                                    screenData.carryOver,
+                                    screenData.periodBalances,
+                                    ::category,
+                                    { newEntry(it) },
+                                    { open("budget") },
+                                )
+                            1 ->
+                                InsightsScreen(
+                                    state,
+                                    range,
+                                    accountFilters.toSet(),
+                                    screenData.occurrences,
+                                    ::category,
+                                )
+                            2 ->
+                                TransactionsScreen(
+                                    state,
+                                    range,
+                                    filter,
+                                    screenData.occurrences,
+                                    query,
+                                    calendar,
+                                    ::edit,
+                                    vm::togglePaid,
+                                    { newEntry(date = it) },
+                                )
+                            3 ->
+                                AccountsScreen(
+                                    state,
+                                    screenData.balances,
+                                    { a ->
+                                        selectedAccount = a.id
+                                        open("account-actions")
+                                    },
+                                    {
+                                        selectedAccount = ""
+                                        open("account")
+                                    },
+                                    { from, to ->
+                                        vm.change { BudgetActions.reorderAccounts(it, from, to) }
+                                    },
+                                )
+                        }
                     }
-                }
                 if (tab == 0)
-                    FloatingActionButton(
-                        onClick = {
-                            if (p.haptics)
-                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            newEntry()
-                        },
-                        modifier =
-                            Modifier.align(Alignment.BottomEnd)
-                                .padding(end = 23.dp, bottom = 20.dp)
-                                .size(54.dp)
-                                .semantics { contentDescription = "Add transaction" },
-                        shape = CircleShape,
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = Color.White,
-                        elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp),
+                    Box(
+                        Modifier.align(Alignment.BottomEnd)
+                            .padding(end = 23.dp, bottom = 20.dp)
+                            .size(54.dp)
+                            .clickable(
+                                remember { MutableInteractionSource() },
+                                indication = null,
+                                role = Role.Button,
+                            ) {
+                                if (p.haptics)
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                newEntry()
+                            }
+                            .semantics { contentDescription = "Add transaction" },
+                        contentAlignment = Alignment.Center,
                     ) {
+                        WatercolorSpot(
+                            MaterialTheme.colorScheme.primary,
+                            Modifier.matchParentSize(),
+                        )
                         FleurIcon("plus", Modifier.size(33.dp), Color.White)
                     }
             }
@@ -368,9 +431,11 @@ private fun BudgetContent(
                     Column(
                         Modifier.weight(1f)
                             .fillMaxHeight()
-                            .clickable(role = Role.Tab) {
-                                if (p.haptics)
-                                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            .clickable(
+                                remember { MutableInteractionSource() },
+                                indication = null,
+                                role = Role.Tab,
+                            ) {
                                 tab = i
                             }
                             .semantics {
@@ -422,6 +487,10 @@ private fun BudgetContent(
                 filterPaid = v.paid
                 close()
             }
+        "account-actions" ->
+            state.account(selectedAccount)?.let { account ->
+                AccountActions(state, vm, account, ::close, onEdit = { route = "account" })
+            }
         "account" ->
             AccountEditor(
                 state,
@@ -467,3 +536,13 @@ private fun BudgetContent(
         }
     }
 }
+
+private data class BudgetScreenData(
+    val source: BudgetState,
+    val range: DateRange,
+    val today: LocalDate,
+    val occurrences: List<Occurrence>,
+    val balances: Map<String, Long>,
+    val carryOver: Map<String, Long>,
+    val periodBalances: Map<String, Long>,
+)

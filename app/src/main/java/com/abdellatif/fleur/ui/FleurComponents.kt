@@ -10,18 +10,27 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.selection.LocalTextSelectionColors
+import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -30,6 +39,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -53,14 +63,29 @@ val Positive = Color(0xFF51BF83)
 val Negative = Color(0xFFED8F8C)
 val LocalPreferences = staticCompositionLocalOf { Preferences() }
 
+private data class FleurTextures(val dark: Boolean, val paper: Painter, val watercolor: Painter)
+
+private val LocalFleurTextures = staticCompositionLocalOf<FleurTextures?> { null }
+
 @Composable
-fun FleurDesign(preferences: Preferences, content: @Composable () -> Unit) {
+fun FleurTheme(preferences: Preferences, content: @Composable () -> Unit) {
     val dark =
         when (preferences.darkMode) {
             "Dark" -> true
             "Light" -> false
             else -> androidx.compose.foundation.isSystemInDarkTheme()
         }
+    val inheritedTextures = LocalFleurTextures.current
+    val textures =
+        if (inheritedTextures?.dark == dark) inheritedTextures
+        else
+            FleurTextures(
+                dark,
+                painterResource(if (dark) R.drawable.paper_dark else R.drawable.paper_light),
+                painterResource(
+                    if (dark) R.drawable.watercolor_spot_dark else R.drawable.watercolor_spot,
+                ),
+            )
     val accent = Color(preferences.accent)
     val colors =
         if (dark)
@@ -83,7 +108,10 @@ fun FleurDesign(preferences: Preferences, content: @Composable () -> Unit) {
                 surfaceVariant = Color(0xFFF1F0EE),
                 outline = Color(0xFFB7B5B3),
             )
-    CompositionLocalProvider(LocalPreferences provides preferences) {
+    CompositionLocalProvider(
+        LocalPreferences provides preferences,
+        LocalFleurTextures provides textures,
+    ) {
         MaterialTheme(
             colorScheme = colors,
             typography =
@@ -96,20 +124,30 @@ fun FleurDesign(preferences: Preferences, content: @Composable () -> Unit) {
                     titleLarge = TextStyle(fontFamily = Inter, fontSize = 22.sp),
                 ),
         ) {
-            CompositionLocalProvider(LocalContentColor provides colors.onBackground) {
-                Box(Modifier.fillMaxSize().background(colors.background)) {
-                    Image(
-                        painterResource(
-                            if (dark) R.drawable.paper_dark else R.drawable.paper_light,
-                        ),
-                        null,
-                        Modifier.matchParentSize(),
-                        contentScale = ContentScale.Crop,
-                        alpha = if (dark) .48f else .63f,
-                    )
-                    content()
-                }
+            CompositionLocalProvider(
+                LocalContentColor provides colors.onBackground,
+                LocalTextSelectionColors provides
+                    TextSelectionColors(accent, accent.copy(alpha = .25f)),
+            ) {
+                content()
             }
+        }
+    }
+}
+
+@Composable
+fun FleurDesign(preferences: Preferences, content: @Composable () -> Unit) {
+    FleurTheme(preferences) {
+        val dark = MaterialTheme.colorScheme.background.red < .5f
+        Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+            Image(
+                checkNotNull(LocalFleurTextures.current).paper,
+                null,
+                Modifier.matchParentSize(),
+                contentScale = ContentScale.Crop,
+                alpha = if (dark) .48f else .63f,
+            )
+            content()
         }
     }
 }
@@ -329,6 +367,23 @@ fun SmallIconButton(
 }
 
 @Composable
+fun WatercolorSpot(color: Color, modifier: Modifier = Modifier) {
+    val texture = checkNotNull(LocalFleurTextures.current).watercolor
+    Box(modifier) {
+        // Fleur layers the same translucent paint twice to retain the pigment texture.
+        repeat(2) {
+            Image(
+                texture,
+                null,
+                Modifier.matchParentSize(),
+                contentScale = ContentScale.FillBounds,
+                colorFilter = ColorFilter.tint(color),
+            )
+        }
+    }
+}
+
+@Composable
 fun CategoryBadge(
     icon: String,
     color: Long,
@@ -337,14 +392,10 @@ fun CategoryBadge(
     filled: Boolean = true,
 ) {
     Box(
-        modifier
-            .size(size)
-            .then(
-                if (filled) Modifier.background(Color(color).copy(alpha = .90f), CircleShape)
-                else Modifier,
-            ),
+        modifier.size(size),
         contentAlignment = Alignment.Center,
     ) {
+        if (filled) WatercolorSpot(Color(color), Modifier.matchParentSize())
         FleurIcon(icon, Modifier.size(size * .57f), if (filled) Color.White else Color(color))
     }
 }
@@ -400,6 +451,70 @@ fun SheetTopBar(
                 Text(action, color = MaterialTheme.colorScheme.onSurface, fontSize = 13.sp)
             }
         else Spacer(Modifier.width(48.dp))
+    }
+}
+
+@Composable
+fun FleurInput(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    modifier: Modifier = Modifier,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    centered: Boolean = false,
+    showLabel: Boolean = true,
+    trailing: (@Composable () -> Unit)? = null,
+) {
+    val focus = LocalFocusManager.current
+    val textColor = MaterialTheme.colorScheme.onSurface
+    Column(modifier) {
+        if (showLabel)
+            Text(
+                label,
+                Modifier.padding(start = 4.dp, bottom = 6.dp),
+                color = textColor.copy(alpha = .65f),
+                fontSize = 12.sp,
+            )
+        BasicTextField(
+            value,
+            onValueChange,
+            modifier =
+                Modifier.fillMaxWidth()
+                    .heightIn(min = 44.dp)
+                    .background(textColor.copy(alpha = .055f), RoundedCornerShape(14.dp))
+                    .padding(horizontal = 14.dp)
+                    .semantics { contentDescription = label },
+            singleLine = true,
+            keyboardOptions = keyboardOptions.copy(imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = { focus.clearFocus() }),
+            textStyle =
+                MaterialTheme.typography.bodyMedium.copy(
+                    color = textColor,
+                    textAlign = if (centered) TextAlign.Center else TextAlign.Start,
+                ),
+            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+            decorationBox = { input ->
+                Row(
+                    Modifier.heightIn(min = 44.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Box(
+                        Modifier.weight(1f).padding(vertical = 10.dp),
+                        contentAlignment =
+                            if (centered) Alignment.Center else Alignment.CenterStart,
+                    ) {
+                        if (value.isEmpty() && !showLabel)
+                            Text(
+                                label,
+                                fontSize = 14.sp,
+                                color = textColor.copy(alpha = .45f),
+                            )
+                        input()
+                    }
+                    trailing?.invoke()
+                }
+            },
+        )
     }
 }
 

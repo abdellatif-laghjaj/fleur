@@ -1,26 +1,16 @@
-<?xml version='1.0' encoding='UTF-8' ?>
-<testsuites tests="8" failures="0" errors="0" skipped="0" time="0.000" timestamp="2026-11-01T14:42:32" hostname="localhost">
-  <testsuite name="com.abdellatif.fleur.BudgetPersistenceTest" tests="1" failures="0" errors="0" skipped="0" time="3.041" timestamp="2026-11-01T14:42:32" hostname="localhost">
-    <properties>
-      <property name="device" value="emulator-5554" />
-    </properties>
-    <testcase name="durableRoundTripAndInvalidRestoreCannotReplaceExistingBudget" classname="com.abdellatif.fleur.BudgetPersistenceTest" time="3.041" />
-  </testsuite>
-  <testsuite name="com.abdellatif.fleur.BudgetWidgetTest" tests="1" failures="0" errors="0" skipped="0" time="1.200" timestamp="2026-11-01T14:42:32" hostname="localhost">
-    <properties>
-      <property name="device" value="emulator-5554" />
-    </properties>
-    <testcase name="boundWidgetShowsDebtTransferAndHidesAmountsWhenLocked" classname="com.abdellatif.fleur.BudgetWidgetTest" time="1.200" />
-  </testsuite>
-  <testsuite name="com.abdellatif.fleur.BudgetWorkflowTest" tests="6" failures="0" errors="0" skipped="0" time="124.386" timestamp="2026-11-01T14:42:32" hostname="localhost">
-    <properties>
-      <property name="device" value="emulator-5554" />
-    </properties>
-    <testcase name="monthlyRecurringTransactionCanBeCreatedAndDeletedAsASeries" classname="com.abdellatif.fleur.BudgetWorkflowTest" time="31.334" />
-    <testcase name="savingsAccountAndTransferPreserveCombinedBalance" classname="com.abdellatif.fleur.BudgetWorkflowTest" time="19.665" />
-    <testcase name="referenceScreensAndSettingsRenderWithRealAccounting" classname="com.abdellatif.fleur.BudgetWorkflowTest" time="26.321" />
-    <testcase name="customCategoryCanChooseIconColorBeRenamedAndDeleted" classname="com.abdellatif.fleur.BudgetWorkflowTest" time="22.398" />
-    <testcase name="debtTransfersAffectCashSummaryAndSeparateDebtTotals" classname="com.abdellatif.fleur.BudgetWorkflowTest" time="2.908" />
-    <testcase name="incomeExpenseSearchCalendarEditAndPaidStatusWork" classname="com.abdellatif.fleur.BudgetWorkflowTest" time="21.760" />
-  </testsuite>
-</testsuites>
+<?xml version='1.0' encoding='utf-8'?>
+<testsuite name="Fleur Android instrumentation (full run plus corrected test rerun)" tests="13" failures="0" errors="0" skipped="0">
+  <testcase classname="com.abdellatif.fleur.BudgetPersistenceTest" name="durableRoundTripAndInvalidRestoreCannotReplaceExistingBudget" />
+  <testcase classname="com.abdellatif.fleur.BudgetWidgetTest" name="boundWidgetShowsDebtTransferAndHidesAmountsWhenLocked" />
+  <testcase classname="com.abdellatif.fleur.BudgetWorkflowTest" name="accountActionSheetUpdatesBalanceAndConfirmsDeletionInBothThemes" />
+  <testcase classname="com.abdellatif.fleur.BudgetWorkflowTest" name="centeredAccountNameInputSavesInBothThemes" />
+  <testcase classname="com.abdellatif.fleur.BudgetWorkflowTest" name="customCategoryCanChooseIconColorBeRenamedAndDeleted" />
+  <testcase classname="com.abdellatif.fleur.BudgetWorkflowTest" name="debtTransfersAffectCashSummaryAndSeparateDebtTotals" />
+  <testcase classname="com.abdellatif.fleur.BudgetWorkflowTest" name="incomeExpenseSearchCalendarEditAndPaidStatusWork" />
+  <testcase classname="com.abdellatif.fleur.BudgetWorkflowTest" name="monthlyRecurringTransactionCanBeCreatedAndDeletedAsASeries" />
+  <testcase classname="com.abdellatif.fleur.BudgetWorkflowTest" name="navigationHasNoPressedRippleAndStillSelectsTabs" />
+  <testcase classname="com.abdellatif.fleur.BudgetWorkflowTest" name="referenceScreensAndSettingsRenderWithRealAccounting" />
+  <testcase classname="com.abdellatif.fleur.BudgetWorkflowTest" name="savingsAccountAndTransferPreserveCombinedBalance" />
+  <testcase classname="com.abdellatif.fleur.BudgetWorkflowTest" name="tabSwitchHasNoOutgoingPageAfterTheFirstFrame" />
+  <testcase classname="com.abdellatif.fleur.BudgetWorkflowTest" name="tabSwitchPreservesInsightSelectionAndTransactionScroll" />
+</testsuite>

@@ -1,7 +1,6 @@
 package com.abdellatif.fleur.ui
 
 import android.app.TimePickerDialog
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -107,14 +106,9 @@ fun SettingsScreen(
                 "Theme",
                 onClick = { picker = "color" },
                 trailing = {
-                    Box(
-                        Modifier.size(44.dp)
-                            .clickable { picker = "color" }
-                            .padding(9.dp)
-                            .background(
-                                Color(p.accent),
-                                androidx.compose.foundation.shape.CircleShape,
-                            ),
+                    WatercolorSpot(
+                        Color(p.accent),
+                        Modifier.size(44.dp).clickable { picker = "color" }.padding(9.dp),
                     )
                 },
             )
@@ -325,12 +319,12 @@ fun CurrencyPicker(current: String, onSelect: (String) -> Unit, onClose: () -> U
     val currencies = remember { Currency.getAvailableCurrencies().sortedBy { it.currencyCode } }
     PaperDialog(onClose) {
         SheetTopBar("Currency", onClose)
-        OutlinedTextField(
+        FleurInput(
             search,
             { search = it },
-            placeholder = { Text("Search currencies") },
+            label = "Search currencies",
+            showLabel = false,
             modifier = Modifier.fillMaxWidth().padding(20.dp),
-            singleLine = true,
         )
         LazyColumn(Modifier.fillMaxSize().padding(horizontal = 24.dp)) {
             items(
