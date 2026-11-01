@@ -13,3 +13,12 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Local build and device-test artifacts.
+/.kotlin/
+/dist/
+/qa/*
+!/qa/VERIFICATION.md
+!/qa/screenshots/
+!/qa/unit-tests.xml
+!/qa/android-tests.xml
