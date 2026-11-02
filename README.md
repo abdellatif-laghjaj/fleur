@@ -2,7 +2,7 @@
 
 # Fleur Personal
 
-<img src="qa/screenshots/22-launcher-icon.png" alt="Fleur red flower launcher icon" width="88" align="right" />
+<img src="qa/screenshots/22-launcher-icon.png" alt="Fleur red flower launcher icon on a white background" width="88" align="right" />
 
 <p align="center">
   <a href="https://developer.android.com/about/versions/10">

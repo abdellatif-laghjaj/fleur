@@ -1,6 +1,8 @@
 # Fleur launcher artwork
 
-Generated with the built-in image-generation tool from the user's flower reference. The transparent PNG is saved at `app/src/main/res/drawable-nodpi/fleur_launcher_art.png`. Android supplies the near-black background and masks the foreground with a 12% inset that scales with the launcher bounds. The image alpha is preserved.
+Generated with the built-in image-generation tool from the user's flower reference. The transparent PNG is saved at `app/src/main/res/drawable-nodpi/fleur_launcher_art.png`. Android supplies the white background and masks the foreground with a 12% inset that scales with the launcher bounds. The image alpha is preserved.
+
+The prompt below records the original artwork generation. The launcher background is a separate Android resource and was subsequently changed to white.
 
 ## Prompt
 
