@@ -58,7 +58,7 @@ The fixture includes future entries: period totals include those entries while a
 - Android instrumentation: **16 tests, zero failures/errors** (`android-tests.xml`; full run in `categories-device-tests.log`, final affected checks in `categories-final-device-tests.log`).
 - Debug lint: **zero errors**, warnings described above. Release lint/build succeeded (`final-build.log`).
 - Personal APK: `../dist/Fleur-Personal-1.1.apk`, **14,435,582 bytes**, version 1.1 (code 2), Android 10/API 29 minimum, target API 37. Includes ARM and x86 variants.
-- APK SHA-256: `eb837295ed60f0f7728d58523a4cbfcca47a001b2bc3dbba156db6cb29cefb57`. Android APK v2 signature verified (`personal-apk-signature.txt`, `../dist/SHA256SUMS`).
+- APK SHA-256: `f0a941aa876f8bd90330bd243da7a93171ebf33e427e0b98845ac4758aaa3979`. Android APK v2 signature verified (`personal-apk-signature.txt`, `../dist/SHA256SUMS`).
 - Final optimized APK installed over the debug build without losing the saved budget/app-lock preference, started, and unlocked using the device PIN (`release-fixed-start.xml`, `release-fixed-home.xml`).
 - With App Lock enabled, selecting a JSON backup returned to the locked screen without displaying its restore confirmation. Entering the correct device PIN revealed the confirmation; restore completed and persisted after background/reopen (`release-restore-locked.xml`, `release-restore-authenticated.xml`, `release-restored-reopen.xml`).
 - Final optimized release created an exact 12.34 expense, persisted it, showed it in Transactions, deleted it with confirmation, and returned to an empty budget (`release-crud-created.xml`, `release-crud-list.xml`, `release-crud-clean.xml`).
@@ -141,3 +141,8 @@ Restored the performance implementation from `4568fce` after the user preferred 
 - Functional device checks use a disposable Android 16 emulator. Its read-only guest has background Google apps disabled and heads-up notifications suppressed for captures; the physical phone was not used. Early captures contained an Android System UI timeout overlay and were discarded. Gallery captures were refreshed after dismissing the pending system overlays and warming up the guest. No frame-rate claim is made from this environment.
 
 The final reference workflow also passed at the original 1080x2400 / density 420 capture size (`categories-gallery-tests.log`); the refreshed gallery was inspected without system overlays. The optimized 1.1 APK installed over the debug build and launched successfully. Native Android UI selected Family Support, saved a 12.34 expense, and displayed it in Transactions (`categories-release-saved-transaction.xml`). `categories-release-runtime.log` contains no fatal AndroidRuntime exception. The signing certificate remains the same personal-build key. SQLite version 2 downgrades to version 1 are not supported.
+
+
+## White launcher background on 2026-11-02
+
+Changed the adaptive icon background from near-black to white. The generated transparent flower PNG is byte-for-byte unchanged. Debug, test and optimized release APK builds passed (`white-icon-build.log`), and the existing launcher renderer test passed at 48, 192 and 512 pixels (`white-icon-device-test.log`). The refreshed README icon preview was inspected and its exposed background is opaque white. The APK signature and checksum were verified. Broader app tests and physical-phone checks were not repeated for this resource-only change.
