@@ -1,0 +1,7 @@
+# Fleur launcher artwork
+
+Generated with the built-in image-generation tool from the user's flower reference. The transparent PNG is saved at `app/src/main/res/drawable-nodpi/fleur_launcher_art.png`. Android supplies the near-black background and masks the foreground with a 12% inset that scales with the launcher bounds. The image alpha is preserved.
+
+## Prompt
+
+Create production Android adaptive launcher icon foreground artwork for a personal budgeting app named Fleur. Use the attached reference only for visual inspiration: red hibiscus-like flowers, a near-black setting, and a few tiny pearl-pink light specks. Output ONE square 1024x1024 PNG with a genuinely transparent background, no app-name text, no letters, no border, no phone mockup and no rounded-square tile. Composition: a bold red/coral five-petal blossom just above center and one smaller companion blossom below-left, an elegant diagonal botanical arrangement. Stylized hand-painted petals with clean sculptural silhouettes and restrained softer pink highlights at the centers, richer crimson overlaps, a few delicate stamen strokes. Only 3-4 small, subtle pale-pink luminous specks; keep them secondary and restrained. All visible artwork must fit well inside the central 60% of the canvas, with generous empty transparent margins for Android adaptive icon masks. Modern, warm, premium, simple and readable at 48px. Avoid photorealism, shiny 3D plastic, excessive particles or diffuse neon halos. The black background will be supplied separately by Android; do not paint a background.

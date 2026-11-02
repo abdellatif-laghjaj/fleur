@@ -615,7 +615,7 @@ fun CategoryPicker(
             ) { index, c ->
                 val lineColor = MaterialTheme.colorScheme.outline.copy(alpha = .35f)
                 Column(
-                    Modifier.height(100.dp)
+                    Modifier.heightIn(min = 132.dp)
                         .clickable { onSelect(c) }
                         .drawBehind {
                             val dash =
@@ -636,18 +636,19 @@ fun CategoryPicker(
                                 pathEffect = dash,
                             )
                         }
-                        .padding(12.dp),
+                        .padding(horizontal = 4.dp, vertical = 18.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                 ) {
-                    CategoryBadge(c.icon, c.color, size = 36.dp, filled = false)
+                    CategoryBadge(c.icon, c.color, size = 58.dp, filled = false)
                     Text(
                         c.name,
-                        fontSize = 11.sp,
+                        fontSize = 13.sp,
+                        lineHeight = 17.sp,
+                        maxLines = 2,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.padding(top = 9.dp),
                     )
-                    Spacer(Modifier.weight(1f))
                 }
             }
         }
@@ -769,18 +770,19 @@ fun IconPicker(onSelect: (String) -> Unit, onClose: () -> Unit) {
             modifier = Modifier.fillMaxWidth().padding(20.dp),
         )
         LazyVerticalGrid(
-            GridCells.Adaptive(62.dp),
+            GridCells.Adaptive(76.dp),
             Modifier.fillMaxSize().padding(horizontal = 15.dp),
         ) {
             items(CategoryIcons.filter { it.name.contains(search, true) }, key = { it.key }) { icon
                 ->
                 Box(
-                    Modifier.size(64.dp)
+                    Modifier.fillMaxWidth()
+                        .heightIn(min = 80.dp)
                         .clickable { onSelect(icon.key) }
                         .semantics { contentDescription = icon.name },
                     contentAlignment = Alignment.Center,
                 ) {
-                    FleurIcon(icon.key, Modifier.size(27.dp), MaterialTheme.colorScheme.primary)
+                    FleurIcon(icon.key, Modifier.size(40.dp), MaterialTheme.colorScheme.primary)
                 }
             }
         }

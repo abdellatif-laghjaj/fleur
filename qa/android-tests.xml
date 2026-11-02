@@ -1,6 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
-<testsuite name="Fleur Android instrumentation (full run plus corrected test rerun)" tests="13" failures="0" errors="0" skipped="0">
+<testsuite name="Fleur Android instrumentation (full suite plus final migration checks)" tests="16" failures="0" errors="0" skipped="0">
   <testcase classname="com.abdellatif.fleur.BudgetPersistenceTest" name="durableRoundTripAndInvalidRestoreCannotReplaceExistingBudget" />
+  <testcase classname="com.abdellatif.fleur.BudgetPersistenceTest" name="versionOneUpgradeMergesCategoriesAndPersistsWithoutReaddingDeletedDefaults" />
   <testcase classname="com.abdellatif.fleur.BudgetWidgetTest" name="boundWidgetShowsDebtTransferAndHidesAmountsWhenLocked" />
   <testcase classname="com.abdellatif.fleur.BudgetWorkflowTest" name="accountActionSheetUpdatesBalanceAndConfirmsDeletionInBothThemes" />
   <testcase classname="com.abdellatif.fleur.BudgetWorkflowTest" name="centeredAccountNameInputSavesInBothThemes" />
@@ -13,4 +14,6 @@
   <testcase classname="com.abdellatif.fleur.BudgetWorkflowTest" name="savingsAccountAndTransferPreserveCombinedBalance" />
   <testcase classname="com.abdellatif.fleur.BudgetWorkflowTest" name="tabSwitchHasNoOutgoingPageAfterTheFirstFrame" />
   <testcase classname="com.abdellatif.fleur.BudgetWorkflowTest" name="tabSwitchPreservesInsightSelectionAndTransactionScroll" />
+  <testcase classname="com.abdellatif.fleur.BudgetWorkflowTest" name="updatedCategoryPickerFindsAndSavesHealthExpense" />
+  <testcase classname="com.abdellatif.fleur.LauncherIconTest" name="adaptiveFlowerIconRendersAtLauncherSizes" />
 </testsuite>

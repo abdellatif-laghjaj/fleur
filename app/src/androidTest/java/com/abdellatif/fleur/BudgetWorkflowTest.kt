@@ -56,7 +56,7 @@ class BudgetWorkflowTest {
 
     @Test
     fun incomeExpenseSearchCalendarEditAndPaidStatusWork() {
-        addEntry(false, "25.50", "Groceries", "Weekly market")
+        addEntry(false, "25.50", "Food & Drinks", "Weekly market")
         compose.waitUntil(10000) { vm.state.value!!.entries.size == 1 }
         addEntry(true, "500.20", "Salary", "November paycheck")
         compose.waitUntil(10000) { vm.state.value!!.entries.size == 2 }
@@ -86,6 +86,33 @@ class BudgetWorkflowTest {
         compose.onNodeWithText("Delete transaction").performScrollTo().performClick()
         compose.onNodeWithText("Delete", useUnmergedTree = true).performClick()
         compose.waitUntil(10000) { vm.state.value!!.entries.size == 1 }
+    }
+
+    @Test
+    fun updatedCategoryPickerFindsAndSavesHealthExpense() {
+        compose.onNodeWithContentDescription("Add transaction").performClick()
+        compose.onNodeWithContentDescription("Amount").performTextInput("12.34")
+        compose.onNodeWithText("Category", useUnmergedTree = true).performClick()
+        val grid = compose.onAllNodes(hasScrollToIndexAction()).onLast()
+        for (name in
+            listOf(
+                "Food & Drinks",
+                "Transportation",
+                "Shopping",
+                "Health & Care",
+                "Communication & PC",
+                "Charity",
+                "Family Support",
+            )) {
+            grid.performScrollToNode(hasText(name))
+            compose.onAllNodesWithText(name).onLast().assertIsDisplayed()
+        }
+        compose.onNodeWithContentDescription("Search categories").performTextInput("Care")
+        compose.onNodeWithText("Health & Care").performClick()
+        compose.onNodeWithText("Save").performClick()
+        compose.waitUntil(10000) { vm.state.value!!.entries.size == 1 }
+        assertEquals("health-care", vm.state.value!!.entries.single().categoryId)
+        assertEquals(1234L, vm.state.value!!.entries.single().amount)
     }
 
     @Test
@@ -500,7 +527,7 @@ class BudgetWorkflowTest {
                 Entry(
                     type = EntryType.EXPENSE,
                     amount = 8000,
-                    categoryId = "category-5",
+                    categoryId = "category-1",
                     accountId = "cash",
                     date = now.plusDays(2),
                 ),
@@ -514,7 +541,7 @@ class BudgetWorkflowTest {
                 Entry(
                     type = EntryType.EXPENSE,
                     amount = 4000,
-                    categoryId = "category-12",
+                    categoryId = "category-1",
                     accountId = "cash",
                     date = now,
                 ),
@@ -556,7 +583,7 @@ class BudgetWorkflowTest {
         compose.onNodeWithContentDescription("Amount").performTextInput("95")
         compose.onNodeWithText("Category", useUnmergedTree = true).performClick()
         screenshot("06-categories.png")
-        compose.onAllNodesWithText("Groceries").onLast().performClick()
+        compose.onAllNodesWithText("Food & Drinks").onLast().performClick()
         screenshot("07-editor.png")
         compose.onAllNodesWithContentDescription("Close").onLast().performClick()
         compose.onNodeWithContentDescription("Open settings").performClick()

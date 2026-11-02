@@ -30,6 +30,142 @@ class BudgetLogicTest {
         assertEquals("category-1", categories.categories.sortedBy { it.order }[3].id)
     }
 
+    @Test
+    fun requestedCategoryDefaultsHaveSeparateCharityAndFamilySupport() {
+        val categories = initialState().categories
+        val expenses = categories.filter { it.type == EntryType.EXPENSE }
+        for (name in
+            listOf(
+                "Food & Drinks",
+                "Transportation",
+                "Shopping",
+                "Health & Care",
+                "Communication & PC",
+                "Charity",
+                "Family Support",
+            )) {
+            assertEquals(1, expenses.count { it.name == name })
+        }
+        assertTrue(
+            expenses.none {
+                it.name in setOf("Groceries", "Restaurant", "Coffee", "Travel", "Taxi", "Internet")
+            },
+        )
+        assertEquals("movie", expenses.single { it.name == "Entertainment" }.icon)
+        assertEquals(EntryType.INCOME, categories.single { it.id == "parents" }.type)
+        assertEquals(initialState(), updateDefaultCategories(initialState()))
+    }
+
+    @Test
+    fun categoryMergePreservesMoneySchedulesExceptionsAndBudgetTotals() {
+        val date = LocalDate.of(2026, 11, 1)
+        val categories =
+            listOf(
+                    "Groceries",
+                    "Restaurant",
+                    "Coffee",
+                    "Travel",
+                    "Taxi",
+                    "Internet",
+                    "Entertainment",
+                )
+                .mapIndexed { i, name ->
+                    Category("old-$i", name, EntryType.EXPENSE, "phone", 0xFFDF84A6, i)
+                }
+        val entries = categories.mapIndexed { i, category ->
+            Entry(
+                id = "entry-$i",
+                type = EntryType.EXPENSE,
+                amount = (i + 1L) * 100,
+                categoryId = category.id,
+                accountId = "default",
+                date = date,
+                repeat = RepeatRule(Frequency.MONTHLY),
+            )
+        }
+        val overrideKey = "entry-1@${date.toEpochDay()}"
+        val deletedKey = "entry-2@${date.plusMonths(1).toEpochDay()}"
+        val before =
+            initialState()
+                .copy(
+                    categories = categories,
+                    entries = entries,
+                    overrides =
+                        mapOf(
+                            overrideKey to entries[1].copy(categoryId = "old-2", amount = 725),
+                            deletedKey to null,
+                        ),
+                    budgets = categories.mapIndexed { i, c -> Budget(c.id, (i + 1L) * 1000) },
+                    preferences = Preferences(overallBudget = 50000),
+                )
+        val after = updateDefaultCategories(before)
+        val food = after.categories.single { it.name == "Food & Drinks" }.id
+        val transport = after.categories.single { it.name == "Transportation" }.id
+        assertEquals(
+            listOf(food, food, food, transport, transport),
+            after.entries.take(5).map { it.categoryId },
+        )
+        assertEquals(food, after.overrides[overrideKey]!!.categoryId)
+        assertTrue(after.overrides.containsKey(deletedKey))
+        assertNull(after.overrides[deletedKey])
+        assertEquals(
+            before.entries.map { it.amount to it.repeat },
+            after.entries.map { it.amount to it.repeat },
+        )
+        assertEquals(
+            before.accountBalance("default", date.plusMonths(3)),
+            after.accountBalance("default", date.plusMonths(3)),
+        )
+        assertEquals(6000L, after.budgets.single { it.categoryId == food }.amount)
+        assertEquals(9000L, after.budgets.single { it.categoryId == transport }.amount)
+        assertEquals(before.budgets.sumOf { it.amount }, after.budgets.sumOf { it.amount })
+        assertEquals(before.preferences, after.preferences)
+        assertEquals(after, updateDefaultCategories(after))
+    }
+
+    @Test
+    fun categoryUpdateKeepsCustomNamesAndExistingTargetCategories() {
+        val custom =
+            Category("category-1", "Market run", EntryType.EXPENSE, "grocery", 0xFF71CA9B, 0)
+        val food = Category("my-food", "food & drinks", EntryType.EXPENSE, "gift", 0xFF85B9D9, 1)
+        val restaurant =
+            Category("category-5", "Restaurant", EntryType.EXPENSE, "restaurant", 0xFFDF84A6, 2)
+        val charityIdCollision =
+            Category("charity", "School donations", EntryType.EXPENSE, "home", 0xFFDF84A6, 3)
+        val shopping =
+            Category("my-shopping", "shopping", EntryType.EXPENSE, "shopping_bag", 0xFFE8B268, 4)
+        val before =
+            initialState()
+                .copy(
+                    categories = listOf(custom, food, restaurant, charityIdCollision, shopping),
+                    entries =
+                        listOf(
+                            Entry(
+                                type = EntryType.EXPENSE,
+                                amount = 500,
+                                accountId = "default",
+                                categoryId = restaurant.id,
+                            ),
+                        ),
+                    budgets = listOf(Budget(food.id, 1000), Budget(restaurant.id, 2000)),
+                )
+        val after = updateDefaultCategories(before)
+        assertTrue(after.categories.contains(custom))
+        assertTrue(after.categories.contains(food))
+        assertTrue(after.categories.contains(shopping))
+        assertEquals(
+            1,
+            after.categories.count {
+                it.type == EntryType.EXPENSE && it.name.equals("Shopping", true)
+            },
+        )
+        assertTrue(after.categories.contains(charityIdCollision))
+        assertNotEquals("charity", after.categories.single { it.name == "Charity" }.id)
+        assertEquals(food.id, after.entries.single().categoryId)
+        assertEquals(3000L, after.budgets.single().amount)
+        assertEquals(after, updateDefaultCategories(after))
+    }
+
     private val jan31 = LocalDate.of(2026, 1, 31)
 
     @Test

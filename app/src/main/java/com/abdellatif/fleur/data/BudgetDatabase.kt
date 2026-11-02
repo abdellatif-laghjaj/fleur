@@ -7,7 +7,7 @@ import android.database.sqlite.SQLiteOpenHelper
 import org.json.JSONObject
 
 class BudgetDatabase(context: Context, name: String = "fleur-personal.db") :
-    SQLiteOpenHelper(context, name, null, 1) {
+    SQLiteOpenHelper(context, name, null, 2) {
     override fun onCreate(db: SQLiteDatabase) {
         for (table in
             listOf("accounts", "categories", "entries", "overrides", "budgets", "preferences")) {
@@ -16,26 +16,26 @@ class BudgetDatabase(context: Context, name: String = "fleur-personal.db") :
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        error("Unsupported database upgrade from $oldVersion to $newVersion")
+        check(oldVersion == 1 && newVersion == 2) {
+            "Unsupported database upgrade from $oldVersion to $newVersion"
+        }
+        read(db)?.let { before -> save(db, before, updateDefaultCategories(before)) }
     }
 
-    fun load(): BudgetState {
+    fun load(): BudgetState =
+        read(readableDatabase) ?: initialState().also { save(BudgetState(), it) }
+
+    private fun read(db: SQLiteDatabase): BudgetState? {
         fun <T> rows(table: String, convert: (String, String) -> T): List<T> =
-            readableDatabase
-                .query(table, arrayOf("id", "payload"), null, null, null, null, "rowid")
-                .use { c ->
-                    buildList {
-                        while (c.moveToNext()) add(convert(c.getString(0), c.getString(1)))
-                    }
+            db.query(table, arrayOf("id", "payload"), null, null, null, null, "rowid").use { c ->
+                buildList {
+                    while (c.moveToNext()) add(convert(c.getString(0), c.getString(1)))
                 }
+            }
         val preferences =
             rows("preferences") { _, text -> StateCodec.preferences(JSONObject(text)) }
                 .firstOrNull()
-        if (preferences == null) {
-            val seed = initialState()
-            save(BudgetState(), seed)
-            return seed
-        }
+        if (preferences == null) return null
         return BudgetState(
             rows("accounts") { _, t -> StateCodec.account(JSONObject(t)) }.sortedBy { it.order },
             rows("categories") { _, t -> StateCodec.category(JSONObject(t)) }.sortedBy { it.order },
@@ -49,9 +49,10 @@ class BudgetDatabase(context: Context, name: String = "fleur-personal.db") :
         )
     }
 
-    fun save(previous: BudgetState, next: BudgetState) {
+    fun save(previous: BudgetState, next: BudgetState) = save(writableDatabase, previous, next)
+
+    private fun save(db: SQLiteDatabase, previous: BudgetState, next: BudgetState) {
         StateCodec.validate(next)
-        val db = writableDatabase
         db.beginTransaction()
         try {
             fun <T> sync(

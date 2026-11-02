@@ -412,77 +412,65 @@ fun periodRange(anchor: LocalDate, period: Period, preferences: Preferences): Da
             DateRange(anchor.withDayOfMonth(1), anchor.withDayOfMonth(anchor.lengthOfMonth()))
     }
 
-fun initialState(): BudgetState {
-    val colors =
-        listOf(
-            0xFFB992DC,
-            0xFFF2BC78,
-            0xFF969CA4,
-            0xFFDD86AC,
-            0xFF71CA9B,
-            0xFFB8A0DD,
-            0xFFE9B66F,
-            0xFFF28B88,
-            0xFFB4A084,
-            0xFFF17B7E,
-            0xFFB1A080,
-            0xFFC39DE2,
-            0xFFB7A181,
-            0xFFF17E7F,
-            0xFFE8B268,
-        )
-    val names =
-        listOf(
-            "Salary",
-            "Groceries",
-            "Gas",
-            "Rent",
-            "Gym",
-            "Restaurant",
-            "Vacation",
-            "Travel",
-            "Gift",
-            "Investments",
-            "Savings",
-            "Entertainment",
-            "Coffee",
-            "Internet",
-            "Taxi",
-        )
-    val icons =
-        listOf(
-            "dollar",
-            "grocery",
-            "gas",
-            "home",
-            "fitness",
-            "restaurant",
-            "vacation",
-            "bus",
-            "gift",
-            "percent",
-            "savings",
-            "phone",
-            "coffee",
-            "wifi",
-            "taxi",
-        )
-    val categories =
-        names.mapIndexed { i, name ->
-            Category(
-                "category-$i",
-                name,
-                if (i == 0) EntryType.INCOME else EntryType.EXPENSE,
-                icons[i],
-                colors[i],
-                i,
-            )
-        } +
+fun initialState(): BudgetState =
+    BudgetState(
+        accounts = listOf(Account("default", "Cash")),
+        categories =
             listOf(
-                Category("parents", "Parents", EntryType.INCOME, "heart", 0xFFE684AC, 15),
-                Category("bonus", "Bonus", EntryType.INCOME, "gift", 0xFF85B9D9, 16),
-                Category("other-income", "Other", EntryType.INCOME, "dollar", 0xFFA1B9A1, 17),
-                Category("other-expense", "Other", EntryType.EXPENSE, "other", 0xFFA1B9A1, 18),
-            )
-    return BudgetState(accounts = listOf(Account("default", "Cash")), categories = categories)
-}
+                Category("category-0", "Salary", EntryType.INCOME, "dollar", 0xFFB992DC, 0),
+                Category(
+                    "category-1",
+                    "Food & Drinks",
+                    EntryType.EXPENSE,
+                    "restaurant",
+                    0xFFF2BC78,
+                    1,
+                ),
+                Category("category-7", "Transportation", EntryType.EXPENSE, "bus", 0xFFF28B88, 2),
+                Category("category-3", "Rent", EntryType.EXPENSE, "home", 0xFFDD86AC, 3),
+                Category("category-2", "Gas", EntryType.EXPENSE, "gas", 0xFF969CA4, 4),
+                Category("category-4", "Gym", EntryType.EXPENSE, "fitness", 0xFF71CA9B, 5),
+                Category("shopping", "Shopping", EntryType.EXPENSE, "shopping_bag", 0xFFE8B268, 6),
+                Category(
+                    "health-care",
+                    "Health & Care",
+                    EntryType.EXPENSE,
+                    "medical_services",
+                    0xFF71CA9B,
+                    7,
+                ),
+                Category(
+                    "category-13",
+                    "Communication & PC",
+                    EntryType.EXPENSE,
+                    "wifi",
+                    0xFF85B9D9,
+                    8,
+                ),
+                Category("category-11", "Entertainment", EntryType.EXPENSE, "movie", 0xFFC39DE2, 9),
+                Category(
+                    "charity",
+                    "Charity",
+                    EntryType.EXPENSE,
+                    "volunteer_activism",
+                    0xFFE684AC,
+                    10,
+                ),
+                Category(
+                    "family-support",
+                    "Family Support",
+                    EntryType.EXPENSE,
+                    "groups",
+                    0xFFB8A0DD,
+                    11,
+                ),
+                Category("category-6", "Vacation", EntryType.EXPENSE, "vacation", 0xFFE9B66F, 12),
+                Category("category-8", "Gift", EntryType.EXPENSE, "gift", 0xFFB4A084, 13),
+                Category("category-9", "Investments", EntryType.EXPENSE, "percent", 0xFFF17B7E, 14),
+                Category("category-10", "Savings", EntryType.EXPENSE, "savings", 0xFFB1A080, 15),
+                Category("parents", "Parents", EntryType.INCOME, "heart", 0xFFE684AC, 16),
+                Category("bonus", "Bonus", EntryType.INCOME, "gift", 0xFF85B9D9, 17),
+                Category("other-income", "Other", EntryType.INCOME, "dollar", 0xFFA1B9A1, 18),
+                Category("other-expense", "Other", EntryType.EXPENSE, "other", 0xFFA1B9A1, 19),
+            ),
+    )

@@ -2,6 +2,8 @@
 
 # Fleur Personal
 
+<img src="qa/screenshots/22-launcher-icon.png" alt="Fleur red flower launcher icon" width="88" align="right" />
+
 <p align="center">
   <a href="https://developer.android.com/about/versions/10">
     <picture>
@@ -93,7 +95,7 @@ Open this folder in Android Studio, or run in PowerShell:
 .\gradlew.bat :app:assembleRelease
 ```
 
-The personal-use APK is `dist/Fleur-Personal-1.0.apk`; Gradle produces it at `app/build/outputs/apk/release/app-release.apk`. A debug build is also available with `:app:assembleDebug`. The project uses the existing Gradle 9.6 / Android Gradle Plugin 9.5 configuration, JDK 25, and Android SDK 37. `local.properties` points to the SDK on this workstation; other machines should configure their own SDK path.
+The personal-use APK is `dist/Fleur-Personal-1.1.apk`; Gradle produces it at `app/build/outputs/apk/release/app-release.apk`. A debug build is also available with `:app:assembleDebug`. The project uses the existing Gradle 9.6 / Android Gradle Plugin 9.5 configuration, JDK 25, and Android SDK 37. `local.properties` points to the SDK on this workstation; other machines should configure their own SDK path.
 
 To install on a chosen device:
 
@@ -117,7 +119,7 @@ Both variants use this workstation's Android debug key. The release variant shri
 | Transactions | Income, expenses, transfers, notes, paid status, future dates, search, account/category/type/paid filters, and calendar |
 | Repeating entries | Daily, weekly, fortnightly, monthly, quarterly, yearly, custom intervals/weekdays, month-end and end dates; one-occurrence or following-series edits/deletes |
 | Accounts | Spending, savings and debt accounts, opening balances, goals, debt limits, balance updates, transfers, hide/unhide, reorder and confirmed deletion |
-| Categories | Custom income/expense categories, 697 original icons, 30 colors, category search, budgets, reorder and safe deletion |
+| Categories | Food & Drinks, Transportation, Shopping, Health & Care, Communication & PC, Charity and Family Support; larger category/icon pickers, custom categories, 697 original icons, 30 colors, budgets, reorder and safe deletion |
 | Appearance | Paper background, watercolor category badges and color swatches, borderless rounded inputs, light/dark/system mode, accent colors, eight heading font choices, heading size and optional decimal display |
 | Preferences | Currency, default account/paid status, budget frequency, month start, week start, carryover, haptics and visibility controls |
 | Android features | Document-picker backup/restore and CSV/PDF export, daily reminders, device-credential app lock, and home-screen summary widget |
@@ -131,6 +133,8 @@ Account balances include paid transactions through today. The period summary and
 All amounts use integer hundredths and exact decimal parsing. Recurring month-end dates do not drift after February. A single edited occurrence retains its own date and paid state independently of its series.
 
 ## Data and exports
+
+Updating from version 1.0 merges Groceries, Restaurant and Coffee into Food & Drinks, and Travel and Taxi into Transportation. Internet becomes Communication & PC. Transactions, recurring exceptions and combined category budgets are retained. Renamed custom categories stay intact. Family Support is an expense category for money sent to family; Parents remains an income category for money received. Backup restores keep the categories recorded in the backup.
 
 - SQLite stores accounts, categories, transactions, repeat exceptions, budgets, and settings locally. Saves use transactions and only write changed records.
 - A JSON backup preserves the entire budget, including recurrence and paid-state exceptions. Restore validates the complete backup before replacing data and retains a recovery copy of the previous budget in the app's private `before-restore.json` file.

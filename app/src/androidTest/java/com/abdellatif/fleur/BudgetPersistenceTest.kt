@@ -12,6 +12,114 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class BudgetPersistenceTest {
     @Test
+    fun versionOneUpgradeMergesCategoriesAndPersistsWithoutReaddingDeletedDefaults() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val name = "fleur-upgrade-${newId()}.db"
+        try {
+            val seed = BudgetDatabase(context, name).use { it.load() }
+            val addedIds = setOf("shopping", "health-care", "charity", "family-support")
+            val legacyCategories =
+                seed.categories
+                    .filter { it.id !in addedIds }
+                    .map {
+                        when (it.id) {
+                            "category-1" -> it.copy(name = "Groceries", icon = "grocery")
+                            "category-7" -> it.copy(name = "Travel")
+                            "category-13" -> it.copy(name = "Internet")
+                            "category-11" -> it.copy(icon = "phone")
+                            else -> it
+                        }
+                    } +
+                    listOf(
+                        Category(
+                            "category-5",
+                            "Restaurant",
+                            EntryType.EXPENSE,
+                            "restaurant",
+                            0xFFDF84A6,
+                            5,
+                        ),
+                        Category(
+                            "category-12",
+                            "Coffee",
+                            EntryType.EXPENSE,
+                            "coffee",
+                            0xFFDF84A6,
+                            12,
+                        ),
+                        Category("category-14", "Taxi", EntryType.EXPENSE, "taxi", 0xFFDF84A6, 14),
+                    )
+            val date = LocalDate.of(2026, 11, 1)
+            val recurring =
+                Entry(
+                    id = "monthly-meal",
+                    type = EntryType.EXPENSE,
+                    amount = 1234,
+                    accountId = "default",
+                    categoryId = "category-5",
+                    date = date,
+                    repeat = RepeatRule(Frequency.MONTHLY),
+                )
+            val key = "${recurring.id}@${date.toEpochDay()}"
+            val legacy =
+                seed.copy(
+                    categories = legacyCategories,
+                    entries =
+                        listOf(
+                            recurring,
+                            recurring.copy(
+                                id = "ride",
+                                categoryId = "category-14",
+                                amount = 650,
+                                repeat = RepeatRule(),
+                            ),
+                        ),
+                    overrides =
+                        mapOf(key to recurring.copy(categoryId = "category-12", amount = 725)),
+                    budgets =
+                        listOf(
+                            Budget("category-1", 10000),
+                            Budget("category-5", 20000),
+                            Budget("category-12", 3000),
+                        ),
+                )
+            BudgetDatabase(context, name).use {
+                it.save(seed, legacy)
+                it.writableDatabase.version = 1
+            }
+            val upgraded =
+                BudgetDatabase(context, name).use {
+                    val state = it.load()
+                    assertEquals(2, it.readableDatabase.version)
+                    state
+                }
+            assertEquals("Food & Drinks", upgraded.category("category-1")!!.name)
+            assertEquals("Transportation", upgraded.category("category-7")!!.name)
+            assertEquals("Communication & PC", upgraded.category("category-13")!!.name)
+            assertTrue(
+                upgraded.categories.none {
+                    it.id in setOf("category-5", "category-12", "category-14")
+                },
+            )
+            assertEquals("category-1", upgraded.entries.first().categoryId)
+            assertEquals("category-7", upgraded.entries.last().categoryId)
+            assertEquals("category-1", upgraded.overrides[key]!!.categoryId)
+            assertEquals(33000L, upgraded.budgets.single().amount)
+            assertEquals(
+                legacy.accountBalance("default", date.plusMonths(2)),
+                upgraded.accountBalance("default", date.plusMonths(2)),
+            )
+            assertEquals(upgraded, StateCodec.decode(StateCodec.encode(upgraded)))
+            val withoutCharity =
+                upgraded.copy(categories = upgraded.categories.filterNot { it.name == "Charity" })
+            BudgetDatabase(context, name).use { it.save(upgraded, withoutCharity) }
+            assertEquals(withoutCharity, BudgetDatabase(context, name).use { it.load() })
+        } finally {
+            context.deleteDatabase(name)
+        }
+    }
+
+    @Test
     fun durableRoundTripAndInvalidRestoreCannotReplaceExistingBudget() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val name = "fleur-persistence-${newId()}.db"
