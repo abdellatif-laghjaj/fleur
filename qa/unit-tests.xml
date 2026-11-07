@@ -1,32 +1,32 @@
 <?xml version='1.0' encoding='utf-8'?>
 <testsuites>
-  <testsuite name="com.abdellatif.fleur.BudgetLogicTest" tests="16" skipped="0" failures="0" errors="0" timestamp="2026-11-07T18:01:59.653Z" hostname="DESKTOP-MHA3QJJ" time="0.38">
+  <testsuite name="com.abdellatif.fleur.BudgetLogicTest" tests="16" skipped="0" failures="0" errors="0" timestamp="2026-11-07T19:25:28.401Z" hostname="DESKTOP-MHA3QJJ" time="0.756">
     <properties />
-    <testcase name="followingSeriesEditPreservesPast" classname="com.abdellatif.fleur.BudgetLogicTest" time="0.033" />
-    <testcase name="moneyIsExactAndRejectsAmbiguousOrExcessPrecision" classname="com.abdellatif.fleur.BudgetLogicTest" time="0.003" />
-    <testcase name="dailyBinsCoverEachDayExactlyOnceAndPreserveLongRangeTotals" classname="com.abdellatif.fleur.BudgetLogicTest" time="0.039" />
-    <testcase name="transfersKeepNetWorthAndDebtRepaymentOutOfSpending" classname="com.abdellatif.fleur.BudgetLogicTest" time="0.001" />
+    <testcase name="followingSeriesEditPreservesPast" classname="com.abdellatif.fleur.BudgetLogicTest" time="0.122" />
+    <testcase name="moneyIsExactAndRejectsAmbiguousOrExcessPrecision" classname="com.abdellatif.fleur.BudgetLogicTest" time="0.074" />
+    <testcase name="dailyBinsCoverEachDayExactlyOnceAndPreserveLongRangeTotals" classname="com.abdellatif.fleur.BudgetLogicTest" time="0.051" />
+    <testcase name="transfersKeepNetWorthAndDebtRepaymentOutOfSpending" classname="com.abdellatif.fleur.BudgetLogicTest" time="0.002" />
     <testcase name="categoryMergePreservesMoneySchedulesExceptionsAndBudgetTotals" classname="com.abdellatif.fleur.BudgetLogicTest" time="0.016" />
-    <testcase name="reorderingChangesOrderWithoutChangingIdentityOrAmounts" classname="com.abdellatif.fleur.BudgetLogicTest" time="0.007" />
-    <testcase name="monthStartClampsAndRangesRemainContinuous" classname="com.abdellatif.fleur.BudgetLogicTest" time="0.001" />
-    <testcase name="customWeeksUseCalendarWeeksAndSelectedDays" classname="com.abdellatif.fleur.BudgetLogicTest" time="0.003" />
-    <testcase name="deletingAccountDoesNotResurrectAnOccurrenceMovedToThatAccount" classname="com.abdellatif.fleur.BudgetLogicTest" time="0.002" />
-    <testcase name="optimizedRepeatCountsAndDatesMatchDayByDayRules" classname="com.abdellatif.fleur.BudgetLogicTest" time="0.249" />
-    <testcase name="forecastHandlesEmptyOneDayAndLeapMonthRanges" classname="com.abdellatif.fleur.BudgetLogicTest" time="0.005" />
-    <testcase name="requestedCategoryDefaultsHaveSeparateCharityAndFamilySupport" classname="com.abdellatif.fleur.BudgetLogicTest" time="0.001" />
-    <testcase name="categoryUpdateKeepsCustomNamesAndExistingTargetCategories" classname="com.abdellatif.fleur.BudgetLogicTest" time="0.016" />
+    <testcase name="reorderingChangesOrderWithoutChangingIdentityOrAmounts" classname="com.abdellatif.fleur.BudgetLogicTest" time="0.043" />
+    <testcase name="monthStartClampsAndRangesRemainContinuous" classname="com.abdellatif.fleur.BudgetLogicTest" time="0.0" />
+    <testcase name="customWeeksUseCalendarWeeksAndSelectedDays" classname="com.abdellatif.fleur.BudgetLogicTest" time="0.004" />
+    <testcase name="deletingAccountDoesNotResurrectAnOccurrenceMovedToThatAccount" classname="com.abdellatif.fleur.BudgetLogicTest" time="0.001" />
+    <testcase name="optimizedRepeatCountsAndDatesMatchDayByDayRules" classname="com.abdellatif.fleur.BudgetLogicTest" time="0.394" />
+    <testcase name="forecastHandlesEmptyOneDayAndLeapMonthRanges" classname="com.abdellatif.fleur.BudgetLogicTest" time="0.002" />
+    <testcase name="requestedCategoryDefaultsHaveSeparateCharityAndFamilySupport" classname="com.abdellatif.fleur.BudgetLogicTest" time="0.0" />
+    <testcase name="categoryUpdateKeepsCustomNamesAndExistingTargetCategories" classname="com.abdellatif.fleur.BudgetLogicTest" time="0.017" />
     <testcase name="forecastSeparatesRecordedFromFutureAndUsesScheduledExpensesAsFloor" classname="com.abdellatif.fleur.BudgetLogicTest" time="0.001" />
-    <testcase name="monthlyRepeatClampsWithoutDriftingAndHonorsEndDate" classname="com.abdellatif.fleur.BudgetLogicTest" time="0.0" />
+    <testcase name="monthlyRepeatClampsWithoutDriftingAndHonorsEndDate" classname="com.abdellatif.fleur.BudgetLogicTest" time="0.001" />
     <testcase name="singleRecurringOccurrenceCanMoveAndBeDeletedWithoutChangingSeries" classname="com.abdellatif.fleur.BudgetLogicTest" time="0.001" />
     <system-out />
     <system-err />
   </testsuite>
-  <testsuite name="com.abdellatif.fleur.CsvImportTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-11-07T18:01:59.400Z" hostname="DESKTOP-MHA3QJJ" time="0.241">
+  <testsuite name="com.abdellatif.fleur.CsvImportTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-11-07T19:25:29.162Z" hostname="DESKTOP-MHA3QJJ" time="0.038">
     <properties />
-    <testcase name="csvParserHandlesEscapedQuotesEmptyFieldsBomAndLineEndings" classname="com.abdellatif.fleur.CsvImportTest" time="0.08" />
-    <testcase name="cashewImportsExactMoneyMultilineNotesAndDoesNotInventRepeats" classname="com.abdellatif.fleur.CsvImportTest" time="0.107" />
-    <testcase name="malformedMoneyCurrencyQuotesAndPartialPaymentsAreRejected" classname="com.abdellatif.fleur.CsvImportTest" time="0.016" />
-    <testcase name="fleurCsvRoundTripPreservesOpeningBalancesTransfersUnpaidAndEscapedNotes" classname="com.abdellatif.fleur.CsvImportTest" time="0.018" />
+    <testcase name="csvParserHandlesEscapedQuotesEmptyFieldsBomAndLineEndings" classname="com.abdellatif.fleur.CsvImportTest" time="0.004" />
+    <testcase name="cashewImportsExactMoneyMultilineNotesAndDoesNotInventRepeats" classname="com.abdellatif.fleur.CsvImportTest" time="0.017" />
+    <testcase name="malformedMoneyCurrencyQuotesAndPartialPaymentsAreRejected" classname="com.abdellatif.fleur.CsvImportTest" time="0.008" />
+    <testcase name="fleurCsvRoundTripPreservesOpeningBalancesTransfersUnpaidAndEscapedNotes" classname="com.abdellatif.fleur.CsvImportTest" time="0.008" />
     <system-out />
     <system-err />
   </testsuite>

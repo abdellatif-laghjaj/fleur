@@ -22,7 +22,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
@@ -372,17 +371,7 @@ fun CategoryAmountRow(
                 overflow = TextOverflow.Ellipsis,
             )
             Column(horizontalAlignment = Alignment.End) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(formatMoney(amount, p), fontSize = 15.sp)
-                    if (expanded != null)
-                        FleurIcon(
-                            "down",
-                            Modifier.padding(start = 5.dp)
-                                .size(16.dp)
-                                .rotate(if (expanded) 180f else 0f),
-                            MaterialTheme.colorScheme.outline,
-                        )
-                }
+                Text(formatMoney(amount, p), fontSize = 15.sp)
                 if (budget > 0) {
                     Spacer(Modifier.height(5.dp))
                     Canvas(Modifier.width(64.dp).height(2.dp)) {
@@ -399,7 +388,7 @@ fun CategoryAmountRow(
                 }
             }
         }
-        DashedDivider(Modifier.padding(horizontal = 12.dp))
+        if (expanded != true) DashedDivider(Modifier.padding(horizontal = 12.dp))
     }
 }
 

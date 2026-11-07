@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<testsuite name="Fleur Android latest case results" tests="20" failures="0" errors="0">
+<testsuite name="Fleur Android latest case results" tests="21" failures="0" errors="0">
   <testcase classname="com.abdellatif.fleur.BudgetPersistenceTest" name="durableRoundTripAndInvalidRestoreCannotReplaceExistingBudget" />
   <testcase classname="com.abdellatif.fleur.BudgetPersistenceTest" name="versionOneUpgradeMergesCategoriesAndPersistsWithoutReaddingDeletedDefaults" />
   <testcase classname="com.abdellatif.fleur.BudgetWidgetTest" name="boundWidgetShowsDebtTransferAndHidesAmountsWhenLocked" />
@@ -20,4 +20,5 @@
   <testcase classname="com.abdellatif.fleur.CsvPersistenceTest" name="freshCsvReplacesRatherThanAppendsAndPersistsAfterReopening" />
   <testcase classname="com.abdellatif.fleur.CsvPersistenceTest" name="suppliedCsvReconcilesWhenAFileIsProvided" />
   <testcase classname="com.abdellatif.fleur.LauncherIconTest" name="adaptiveFlowerIconRendersAtLauncherSizes" />
+  <testcase classname="com.abdellatif.fleur.FleurSwitchAppearanceTest" name="thumbsStayWhiteAndToggleInBothThemes" />
 </testsuite>

@@ -616,7 +616,13 @@ fun FleurSwitch(checked: Boolean, onCheckedChange: (Boolean) -> Unit, label: Str
     Box(
         Modifier.size(48.dp)
             .semantics { contentDescription = label }
-            .toggleable(checked, role = Role.Switch, onValueChange = onCheckedChange),
+            .toggleable(
+                value = checked,
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                role = Role.Switch,
+                onValueChange = onCheckedChange,
+            ),
         contentAlignment = Alignment.Center,
     ) {
         Canvas(Modifier.size(42.dp, 24.dp)) {

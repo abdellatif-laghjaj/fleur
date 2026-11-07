@@ -46,7 +46,7 @@ Budgeted expense categories expand into a spending outlook, with recorded spendi
 
 ## Screenshots
 
-Captured from the running Android app with sample data. CSV captures are from version 1.3; the other gallery images are from earlier releases. Select an image to view it at full size.
+The latest UI examples are native app-content captures from version 1.4 with sample data, without Android system chrome. CSV captures are from version 1.3; the remaining gallery images are from earlier releases. Select an image to view it at full size.
 
 <table>
   <tr>
@@ -63,6 +63,11 @@ Captured from the running Android app with sample data. CSV captures are from ve
     <td align="center" width="33%"><a href="qa/screenshots/07-editor.png"><img src="qa/screenshots/07-editor.png" alt="Fleur transaction editor screen" width="220" /></a><br /><sub>Transaction editor</sub></td>
     <td align="center" width="33%"><a href="qa/screenshots/12-account-actions-dark.png"><img src="qa/screenshots/12-account-actions-dark.png" alt="Fleur account action sheet screen" width="220" /></a><br /><sub>Account action sheet</sub></td>
     <td align="center" width="33%"><a href="qa/screenshots/13-delete-account-dark.png"><img src="qa/screenshots/13-delete-account-dark.png" alt="Fleur delete confirmation screen" width="220" /></a><br /><sub>Delete confirmation</sub></td>
+  </tr>
+  <tr>
+    <td align="center" width="33%"><a href="qa/screenshots/23-insights-expanded-dark.png"><img src="qa/screenshots/23-insights-expanded-dark.png" alt="Fleur expanded category transactions" width="220" /></a><br /><sub>Expanded category transactions</sub></td>
+    <td align="center" width="33%"><a href="qa/screenshots/25-budget-outlook-dark.png"><img src="qa/screenshots/25-budget-outlook-dark.png" alt="Fleur category budget outlook" width="220" /></a><br /><sub>Category budget outlook</sub></td>
+    <td align="center" width="33%"><a href="qa/screenshots/24-daily-spending-dark.png"><img src="qa/screenshots/24-daily-spending-dark.png" alt="Fleur labelled daily spending" width="220" /></a><br /><sub>Labelled daily spending</sub></td>
   </tr>
 </table>
 
@@ -85,9 +90,16 @@ Captured from the running Android app with sample data. CSV captures are from ve
     <td align="center" width="33%"><a href="qa/screenshots/19-account-input-dark.png"><img src="qa/screenshots/19-account-input-dark.png" alt="Fleur borderless account name input in dark mode" width="220" /></a><br /><sub>Dark account input</sub></td>
     <td align="center" width="33%"><a href="qa/screenshots/20-account-input-release.png"><img src="qa/screenshots/20-account-input-release.png" alt="Fleur account input in the installed release APK" width="220" /></a><br /><sub>Installed release input</sub></td>
   </tr>
+  <tr>
+    <td align="center" width="33%"><a href="qa/screenshots/26-budget-outlook-light.png"><img src="qa/screenshots/26-budget-outlook-light.png" alt="Fleur light budget outlook" width="220" /></a><br /><sub>Light budget outlook</sub></td>
+    <td align="center" width="33%"><a href="qa/screenshots/31-insights-income-dark.png"><img src="qa/screenshots/31-insights-income-dark.png" alt="Fleur income category expansion" width="220" /></a><br /><sub>Income expansion</sub></td>
+    <td align="center" width="33%"><a href="qa/screenshots/29-csv-settings.png"><img src="qa/screenshots/29-csv-settings.png" alt="Fleur CSV settings with white switches" width="220" /></a><br /><sub>Settings switches</sub></td>
+  </tr>
 </table>
 
 </details>
+
+[Income category expansion](qa/screenshots/31-insights-income-dark.png) uses the same inline layout.
 
 ## Build and run
 
@@ -97,7 +109,7 @@ Open this folder in Android Studio, or run in PowerShell:
 .\gradlew.bat :app:assembleRelease
 ```
 
-The personal-use APK is `dist/Fleur-Personal-1.3.apk`; Gradle produces it at `app/build/outputs/apk/release/app-release.apk`. A debug build is also available with `:app:assembleDebug`. The project uses the existing Gradle 9.6 / Android Gradle Plugin 9.5 configuration, JDK 25, and Android SDK 37. `local.properties` points to the SDK on this workstation; other machines should configure their own SDK path.
+The personal-use APK is `dist/Fleur-Personal-1.4.apk`; Gradle produces it at `app/build/outputs/apk/release/app-release.apk`. A debug build is also available with `:app:assembleDebug`. The project uses the existing Gradle 9.6 / Android Gradle Plugin 9.5 configuration, JDK 25, and Android SDK 37. `local.properties` points to the SDK on this workstation; other machines should configure their own SDK path.
 
 To install on a chosen device:
 

@@ -47,7 +47,7 @@ fun InsightTransactionRow(
             .padding(start = 8.dp, end = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Canvas(Modifier.width(36.dp).height(48.dp)) {
+        Canvas(Modifier.width(31.dp).height(48.dp)) {
             drawLine(
                 line,
                 Offset(size.width / 2, 0f),
@@ -58,8 +58,7 @@ fun InsightTransactionRow(
         }
         Column(Modifier.weight(1f).padding(start = 12.dp, top = 8.dp, bottom = 8.dp)) {
             Text(row.date.format(chartDate), fontSize = 14.sp)
-            val detail =
-                row.entry.notes.ifBlank { state.account(row.entry.accountId)?.name.orEmpty() }
+            val detail = row.entry.notes
             if (detail.isNotBlank())
                 Text(
                     detail,

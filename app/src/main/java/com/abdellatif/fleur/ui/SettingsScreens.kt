@@ -209,7 +209,7 @@ fun SettingsScreen(
             SectionLabel("HELP")
             FormRow("How to use Fleur", "Guide") { picker = "help" }
             Text(
-                "Fleur Personal · 1.3\nYour budget is stored on this device. All features are available.",
+                "Fleur Personal · 1.4\nYour budget is stored on this device. All features are available.",
                 fontSize = 11.sp,
                 color = MaterialTheme.colorScheme.outline,
                 modifier = Modifier.padding(top = 26.dp, bottom = 36.dp),
