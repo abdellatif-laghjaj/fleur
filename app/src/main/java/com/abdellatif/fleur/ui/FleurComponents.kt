@@ -1,6 +1,7 @@
 package com.abdellatif.fleur.ui
 
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -8,6 +9,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -91,11 +93,11 @@ fun FleurTheme(preferences: Preferences, content: @Composable () -> Unit) {
         if (dark)
             darkColorScheme(
                 primary = accent,
-                background = Color(0xFF202124),
-                surface = Color(0xFF292A2D),
+                background = Color(0xFF30302F),
+                surface = Color(0xFF383837),
                 onBackground = Color(0xFFF0ECE9),
                 onSurface = Color(0xFFF0ECE9),
-                surfaceVariant = Color(0xFF363537),
+                surfaceVariant = Color(0xFF424240),
                 outline = Color(0xFF777477),
             )
         else
@@ -145,7 +147,7 @@ fun FleurDesign(preferences: Preferences, content: @Composable () -> Unit) {
                 null,
                 Modifier.matchParentSize(),
                 contentScale = ContentScale.Crop,
-                alpha = if (dark) .48f else .63f,
+                alpha = if (dark) .18f else .63f,
             )
             content()
         }
@@ -602,5 +604,34 @@ fun ChoicePill(
             Spacer(Modifier.width(5.dp))
         }
         Text(text.uppercase(), fontSize = 10.sp, letterSpacing = 1.sp)
+    }
+}
+
+@Composable
+fun FleurSwitch(checked: Boolean, onCheckedChange: (Boolean) -> Unit, label: String) {
+    val position by animateFloatAsState(if (checked) 1f else 0f, tween(160), label = "Switch thumb")
+    val track =
+        if (checked) MaterialTheme.colorScheme.primary
+        else MaterialTheme.colorScheme.onSurface.copy(alpha = .22f)
+    Box(
+        Modifier.size(48.dp)
+            .semantics { contentDescription = label }
+            .toggleable(checked, role = Role.Switch, onValueChange = onCheckedChange),
+        contentAlignment = Alignment.Center,
+    ) {
+        Canvas(Modifier.size(42.dp, 24.dp)) {
+            drawRoundRect(
+                track,
+                cornerRadius = androidx.compose.ui.geometry.CornerRadius(size.height / 2),
+            )
+            drawCircle(
+                Color.White,
+                10.dp.toPx(),
+                androidx.compose.ui.geometry.Offset(
+                    12.dp.toPx() + 18.dp.toPx() * position,
+                    size.height / 2,
+                ),
+            )
+        }
     }
 }

@@ -34,7 +34,7 @@ class BudgetWorkflowTest {
             vm = BudgetViewModel(application, dbName)
             store.put("test", vm)
         }
-        compose.setContent { FleurApp(vm, { _, _ -> }, {}, {}, {}) }
+        compose.setContent { FleurApp(vm, {}, {}, {}, {}) }
         compose.waitUntil(10000) { vm.state.value != null }
     }
 
@@ -430,6 +430,109 @@ class BudgetWorkflowTest {
             .onNodeWithText("This and all following transactions", useUnmergedTree = true)
             .performClick()
         compose.waitUntil(10000) { vm.state.value!!.entries.isEmpty() }
+    }
+
+    @Test
+    fun insightsExpandInlineAndBudgetOutlookCollapsesInBothThemes() {
+        val today = LocalDate.now()
+        compose.runOnIdle {
+            vm.change { seed ->
+                seed.copy(
+                    preferences = seed.preferences.copy(darkMode = "Dark"),
+                    budgets = listOf(Budget("category-1", 50000)),
+                    entries =
+                        listOf(
+                            Entry(
+                                id = "market",
+                                type = EntryType.EXPENSE,
+                                amount = 2300,
+                                categoryId = "category-1",
+                                accountId = "default",
+                                date = today,
+                                notes = "Fresh market",
+                            ),
+                            Entry(
+                                id = "lunch",
+                                type = EntryType.EXPENSE,
+                                amount = 1500,
+                                categoryId = "category-1",
+                                accountId = "default",
+                                date = today,
+                                notes = "Lunch",
+                            ),
+                            Entry(
+                                id = "rent",
+                                type = EntryType.EXPENSE,
+                                amount = 10000,
+                                categoryId = "category-3",
+                                accountId = "default",
+                                date = today,
+                                notes = "Apartment",
+                            ),
+                        ),
+                )
+            }
+        }
+        compose.onNodeWithContentDescription("Insights").performClick()
+        compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Food & Drinks"))
+        compose.onNodeWithText("Food & Drinks").performClick()
+        compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Fresh market"))
+        compose.onNodeWithText("Fresh market").assertIsDisplayed()
+        compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Lunch"))
+        compose.waitForIdle()
+        screenshot("23-insights-expanded-dark.png")
+        compose.onNodeWithText("Lunch").assertIsDisplayed()
+        compose.onNodeWithText("Apartment").assertDoesNotExist()
+        compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Food & Drinks"))
+        screenshot("23-insights-expanded-dark.png")
+        compose.onNodeWithText("Fresh market").performClick()
+        compose.onNodeWithContentDescription("Amount").assertExists()
+        compose.onNodeWithContentDescription("Close").performClick()
+        compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Food & Drinks"))
+        compose.onNodeWithText("Food & Drinks").performClick()
+        compose.onNodeWithText("Fresh market").assertDoesNotExist()
+        compose.waitForIdle()
+        compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Daily average"))
+        screenshot("24-daily-spending-dark.png")
+        compose.onNodeWithContentDescription("Home").performClick()
+        for (mode in listOf("Dark", "Light")) {
+            compose.runOnIdle { vm.preferences { it.copy(darkMode = mode) } }
+            compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Food & Drinks"))
+            compose.onNodeWithText("Food & Drinks").performClick()
+            compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Budget outlook"))
+            compose.onNodeWithText("Budget outlook").assertIsDisplayed()
+            compose
+                .onNode(hasScrollToIndexAction())
+                .performScrollToNode(hasText("View transactions"))
+            compose.onNodeWithText("View transactions").assertIsDisplayed()
+            compose.onNode(hasScrollToIndexAction()).performTouchInput { swipeUp() }
+            screenshot(
+                if (mode == "Dark") "25-budget-outlook-dark.png" else "26-budget-outlook-light.png",
+            )
+            compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Food & Drinks"))
+            compose.onNodeWithText("Food & Drinks").performClick()
+            compose.onNodeWithText("Budget outlook").assertDoesNotExist()
+        }
+        compose.onNodeWithContentDescription("Open settings").performClick()
+        compose.onNodeWithText("Enable Paid / Not Paid").performScrollTo()
+        screenshot("27-settings-switches-light.png")
+        compose.runOnIdle { vm.preferences { it.copy(darkMode = "Dark") } }
+        screenshot("28-settings-switches-dark.png")
+        val carry = compose.onNodeWithContentDescription("Carry Over")
+        carry.assertIsOff().performClick().assertIsOn()
+        compose.waitUntil(10000) { vm.state.value!!.preferences.carryOver }
+        screenshot("28-settings-switches-dark.png")
+    }
+
+    @Test
+    fun settingsOfferCsvImportAndExportWithoutLegacyBackupOrPdf() {
+        compose.onNodeWithContentDescription("Open settings").performClick()
+        compose.onNodeWithText("Import CSV").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Export CSV").assertIsDisplayed()
+        compose.onNodeWithText("Create backup").assertDoesNotExist()
+        compose.onNodeWithText("Restore backup").assertDoesNotExist()
+        compose.onNodeWithText("Export report").assertDoesNotExist()
+        screenshot("29-csv-settings.png")
     }
 
     private fun screenshot(name: String) {

@@ -1,8 +1,15 @@
 package com.abdellatif.fleur.ui
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -15,6 +22,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
@@ -23,8 +31,10 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -39,6 +49,7 @@ import kotlin.math.*
 @Composable
 fun HomeScreen(
     state: BudgetState,
+    range: DateRange,
     accountIds: Set<String>,
     periodOccurrences: List<Occurrence>,
     carryOverBalances: Map<String, Long>,
@@ -48,6 +59,7 @@ fun HomeScreen(
     onBudget: () -> Unit,
 ) {
     val p = state.preferences
+    var expandedCategory by rememberSaveable(range, accountIds) { mutableStateOf<String?>(null) }
     val occurrences =
         remember(periodOccurrences, accountIds) {
             periodOccurrences.filter {
@@ -206,20 +218,46 @@ fun HomeScreen(
                     { onAdd(EntryType.EXPENSE) },
                 )
             }
-        items(expenseCategories, key = { "expense-${it.id}" }) { c ->
-            val spent =
-                standard
-                    .filter { it.entry.type == EntryType.EXPENSE && it.entry.categoryId == c.id }
-                    .sumOf { it.entry.amount }
-            val budget = state.budgets.find { it.categoryId == c.id }?.amount ?: 0
-            CategoryAmountRow(
-                c,
-                if (p.budgetRemaining && budget > 0) budget - spent else spent,
-                p,
-                budget = budget,
-                spent = spent,
-                onClick = { onCategory(c.id) },
-            )
+        expenseCategories.forEach { c ->
+            item(key = "expense-${c.id}") {
+                val spent =
+                    standard
+                        .filter {
+                            it.entry.type == EntryType.EXPENSE && it.entry.categoryId == c.id
+                        }
+                        .sumOf { it.entry.amount }
+                val budget = state.budgets.find { it.categoryId == c.id }?.amount ?: 0
+                CategoryAmountRow(
+                    c,
+                    if (p.budgetRemaining && budget > 0) budget - spent else spent,
+                    p,
+                    budget = budget,
+                    spent = spent,
+                    expanded = if (budget > 0) expandedCategory == c.id else null,
+                    onClick = {
+                        if (budget > 0)
+                            expandedCategory = if (expandedCategory == c.id) null else c.id
+                        else onCategory(c.id)
+                    },
+                )
+            }
+            item(key = "forecast-${c.id}") {
+                AnimatedVisibility(
+                    expandedCategory == c.id &&
+                        state.budgets.any { it.categoryId == c.id && it.amount > 0 },
+                    enter = expandVertically(tween(200)) + fadeIn(tween(160)),
+                    exit = shrinkVertically(tween(180)) + fadeOut(tween(120)),
+                ) {
+                    CategoryForecast(
+                        c,
+                        standard.filter { it.entry.categoryId == c.id },
+                        range,
+                        state.budgets.find { it.categoryId == c.id }?.amount ?: 0L,
+                        p,
+                        onTransactions = { onCategory(c.id) },
+                    )
+                }
+            }
         }
         if (p.showDebt) {
             val debt = occurrences.filter {
@@ -304,9 +342,21 @@ fun CategoryAmountRow(
     p: Preferences,
     budget: Long = 0,
     spent: Long = amount,
+    expanded: Boolean? = null,
     onClick: () -> Unit,
 ) {
-    Column(Modifier.fillMaxWidth().clickable(onClick = onClick)) {
+    Column(
+        Modifier.fillMaxWidth()
+            .semantics {
+                if (expanded != null) stateDescription = if (expanded) "Expanded" else "Collapsed"
+            }
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                role = Role.Button,
+                onClick = onClick,
+            ),
+    ) {
         Row(
             Modifier.fillMaxWidth()
                 .heightIn(min = 60.dp)
@@ -322,7 +372,17 @@ fun CategoryAmountRow(
                 overflow = TextOverflow.Ellipsis,
             )
             Column(horizontalAlignment = Alignment.End) {
-                Text(formatMoney(amount, p), fontSize = 15.sp)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(formatMoney(amount, p), fontSize = 15.sp)
+                    if (expanded != null)
+                        FleurIcon(
+                            "down",
+                            Modifier.padding(start = 5.dp)
+                                .size(16.dp)
+                                .rotate(if (expanded) 180f else 0f),
+                            MaterialTheme.colorScheme.outline,
+                        )
+                }
                 if (budget > 0) {
                     Spacer(Modifier.height(5.dp))
                     Canvas(Modifier.width(64.dp).height(2.dp)) {
@@ -349,8 +409,9 @@ fun InsightsScreen(
     range: DateRange,
     accountIds: Set<String>,
     periodOccurrences: List<Occurrence>,
-    onCategory: (String) -> Unit,
+    onEdit: (Occurrence) -> Unit,
 ) {
+    var expandedCategory by rememberSaveable(range, accountIds) { mutableStateOf<String?>(null) }
     var type by rememberSaveable { mutableStateOf(EntryType.EXPENSE) }
     val occurrences =
         remember(periodOccurrences, accountIds, type) {
@@ -398,11 +459,38 @@ fun InsightsScreen(
         item { ScriptHeading(if (type == EntryType.EXPENSE) "Expenses" else "Income") }
         if (totals.isEmpty())
             item { EmptyMessage("No ${type.name.lowercase()} transactions in this time period.") }
-        items(totals, key = { it.first.id }) { (c, amount) ->
-            CategoryAmountRow(c, amount, state.preferences, onClick = { onCategory(c.id) })
+        totals.forEach { (c, amount) ->
+            item(key = c.id) {
+                CategoryAmountRow(
+                    c,
+                    amount,
+                    state.preferences,
+                    expanded = expandedCategory == c.id,
+                    onClick = { expandedCategory = if (expandedCategory == c.id) null else c.id },
+                )
+            }
+            if (expandedCategory == c.id) {
+                items(
+                    occurrences
+                        .filter { it.entry.categoryId == c.id }
+                        .sortedByDescending { it.date },
+                    key = { "insight-${it.key}" },
+                ) { occurrence ->
+                    InsightTransactionRow(occurrence, state, Modifier.animateItem(), onEdit)
+                }
+                item(key = "end-${c.id}") {
+                    DashedDivider(Modifier.padding(horizontal = 12.dp, vertical = 8.dp))
+                }
+            }
         }
         if (totals.isNotEmpty()) {
-            item { ScriptHeading("Daily spending", Modifier.padding(top = 24.dp), 46) }
+            item {
+                ScriptHeading(
+                    if (type == EntryType.EXPENSE) "Daily spending" else "Daily income",
+                    Modifier.padding(top = 24.dp),
+                    46,
+                )
+            }
             item { SpendingChart(occurrences, range) }
             item { FormRow("Total", formatMoney(totals.sumOf { it.second }, state.preferences)) }
             item {
@@ -521,30 +609,6 @@ private fun DonutChart(totals: List<Pair<Category, Long>>, modifier: Modifier = 
                     modifier = Modifier.padding(top = 2.dp),
                 )
             }
-        }
-    }
-}
-
-@Composable
-private fun SpendingChart(rows: List<Occurrence>, range: DateRange) {
-    val days = java.time.temporal.ChronoUnit.DAYS.between(range.start, range.end).toInt() + 1
-    val groups = rows.groupBy { it.date }.mapValues { (_, v) -> v.sumOf { it.entry.amount } }
-    val max = (groups.values.maxOrNull() ?: 1L).coerceAtLeast(1)
-    val color = MaterialTheme.colorScheme.primary
-    Canvas(Modifier.fillMaxWidth().height(125.dp).padding(vertical = 10.dp)) {
-        val bins = days.coerceAtMost(60)
-        val width = size.width / bins
-        for (i in 0 until bins) {
-            val start = range.start.plusDays((i.toLong() * days) / bins)
-            val end = range.start.plusDays(((i + 1L) * days) / bins - 1)
-            val value = groups.filterKeys { it in start..end }.values.sum()
-            val h = (value.toFloat() / max * size.height).coerceAtMost(size.height)
-            drawRoundRect(
-                color.copy(alpha = .65f),
-                Offset(i * width + width * .2f, size.height - h),
-                Size(width * .6f, h),
-                androidx.compose.ui.geometry.CornerRadius(1.dp.toPx()),
-            )
         }
     }
 }

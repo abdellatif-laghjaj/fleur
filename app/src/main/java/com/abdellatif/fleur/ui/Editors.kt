@@ -532,7 +532,10 @@ fun RepeatEditor(
                     }
                 }
                 if (frequency in listOf(Frequency.MONTHLY, Frequency.QUARTERLY, Frequency.YEARLY))
-                    FormRow("Last day of month", trailing = { Switch(lastDay, { lastDay = it }) })
+                    FormRow(
+                        "Last day of month",
+                        trailing = { FleurSwitch(lastDay, { lastDay = it }, "Last day of month") },
+                    )
                 FormRow("End date", end?.toString() ?: "Never") {
                     end = if (end == null) start.plusYears(1) else null
                 }
@@ -1105,8 +1108,11 @@ fun AccountEditor(
                     )
                 },
             )
-            FormRow("Include in balance", trailing = { Switch(include, { include = it }) })
-            FormRow("Hidden", trailing = { Switch(hidden, { hidden = it }) })
+            FormRow(
+                "Include in balance",
+                trailing = { FleurSwitch(include, { include = it }, "Include in balance") },
+            )
+            FormRow("Hidden", trailing = { FleurSwitch(hidden, { hidden = it }, "Hidden") })
             if (account != null) {
                 FormRow("Current balance", formatMoney(balance, state.preferences)) {
                     picker = "balance"
