@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<testsuite name="Fleur Android instrumentation (full suite plus final migration checks)" tests="16" failures="0" errors="0" skipped="0">
+<testsuite name="Fleur Android latest case results" tests="21" failures="0" errors="0">
   <testcase classname="com.abdellatif.fleur.BudgetPersistenceTest" name="durableRoundTripAndInvalidRestoreCannotReplaceExistingBudget" />
   <testcase classname="com.abdellatif.fleur.BudgetPersistenceTest" name="versionOneUpgradeMergesCategoriesAndPersistsWithoutReaddingDeletedDefaults" />
   <testcase classname="com.abdellatif.fleur.BudgetWidgetTest" name="boundWidgetShowsDebtTransferAndHidesAmountsWhenLocked" />
@@ -8,12 +8,17 @@
   <testcase classname="com.abdellatif.fleur.BudgetWorkflowTest" name="customCategoryCanChooseIconColorBeRenamedAndDeleted" />
   <testcase classname="com.abdellatif.fleur.BudgetWorkflowTest" name="debtTransfersAffectCashSummaryAndSeparateDebtTotals" />
   <testcase classname="com.abdellatif.fleur.BudgetWorkflowTest" name="incomeExpenseSearchCalendarEditAndPaidStatusWork" />
+  <testcase classname="com.abdellatif.fleur.BudgetWorkflowTest" name="insightsExpandInlineAndBudgetOutlookCollapsesInBothThemes" />
   <testcase classname="com.abdellatif.fleur.BudgetWorkflowTest" name="monthlyRecurringTransactionCanBeCreatedAndDeletedAsASeries" />
   <testcase classname="com.abdellatif.fleur.BudgetWorkflowTest" name="navigationHasNoPressedRippleAndStillSelectsTabs" />
   <testcase classname="com.abdellatif.fleur.BudgetWorkflowTest" name="referenceScreensAndSettingsRenderWithRealAccounting" />
   <testcase classname="com.abdellatif.fleur.BudgetWorkflowTest" name="savingsAccountAndTransferPreserveCombinedBalance" />
+  <testcase classname="com.abdellatif.fleur.BudgetWorkflowTest" name="settingsOfferCsvImportAndExportWithoutLegacyBackupOrPdf" />
   <testcase classname="com.abdellatif.fleur.BudgetWorkflowTest" name="tabSwitchHasNoOutgoingPageAfterTheFirstFrame" />
   <testcase classname="com.abdellatif.fleur.BudgetWorkflowTest" name="tabSwitchPreservesInsightSelectionAndTransactionScroll" />
   <testcase classname="com.abdellatif.fleur.BudgetWorkflowTest" name="updatedCategoryPickerFindsAndSavesHealthExpense" />
+  <testcase classname="com.abdellatif.fleur.CsvPersistenceTest" name="freshCsvReplacesRatherThanAppendsAndPersistsAfterReopening" />
+  <testcase classname="com.abdellatif.fleur.CsvPersistenceTest" name="suppliedCsvReconcilesWhenAFileIsProvided" />
   <testcase classname="com.abdellatif.fleur.LauncherIconTest" name="adaptiveFlowerIconRendersAtLauncherSizes" />
+  <testcase classname="com.abdellatif.fleur.FleurSwitchAppearanceTest" name="thumbsStayWhiteAndToggleInBothThemes" />
 </testsuite>

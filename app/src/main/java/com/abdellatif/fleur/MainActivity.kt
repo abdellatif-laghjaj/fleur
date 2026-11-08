@@ -34,7 +34,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var vm: BudgetViewModel
     private var unlocked by mutableStateOf(false)
     private var restoring by mutableStateOf<BudgetState?>(null)
-    private var pendingRange = DateRange(LocalDate.now().withDayOfMonth(1), LocalDate.now())
+    private var importing by mutableStateOf(false)
     private val credential =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             unlocked = result.resultCode == RESULT_OK
@@ -44,21 +44,11 @@ class MainActivity : ComponentActivity() {
             if (granted) vm.preferences { it.copy(reminders = true) }
             else message("Allow notifications in Android settings to receive reminders.")
         }
-    private val backup =
-        registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri
-            ->
-            uri?.let { writeExport(it, "backup") }
-        }
     private val csv =
         registerForActivityResult(ActivityResultContracts.CreateDocument("text/csv")) { uri ->
-            uri?.let { writeExport(it, "csv") }
+            uri?.let { writeExport(it) }
         }
-    private val pdf =
-        registerForActivityResult(ActivityResultContracts.CreateDocument("application/pdf")) { uri
-            ->
-            uri?.let { writeExport(it, "pdf") }
-        }
-    private val restore =
+    private val importCsv =
         registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
             if (uri != null)
                 lifecycleScope.launch {
@@ -73,16 +63,21 @@ class MainActivity : ComponentActivity() {
                                             val count = input.read(buffer)
                                             if (count < 0) break
                                             require(bytes.size() + count <= 25_000_000) {
-                                                "Backup is too large"
+                                                "CSV is too large"
                                             }
                                             bytes.write(buffer, 0, count)
                                         }
-                                        bytes.toString(Charsets.UTF_8.name())
+                                        Charsets.UTF_8.newDecoder()
+                                            .decode(java.nio.ByteBuffer.wrap(bytes.toByteArray()))
+                                            .toString()
                                     } ?: error("Unable to read the selected file")
-                                StateCodec.decode(text)
+                                CsvImport.decode(
+                                    text,
+                                    vm.state.value?.preferences ?: error("Budget is still loading"),
+                                )
                             }
                     } catch (e: Exception) {
-                        message(e.message ?: "Unable to read backup")
+                        message(e.message ?: "Unable to read CSV")
                     }
                 }
         }
@@ -92,13 +87,6 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         vm = ViewModelProvider(this)[BudgetViewModel::class.java]
         lifecycleScope.launch { vm.errors.collect { message(it) } }
-        savedInstanceState?.getString("exportStart")?.let { start ->
-            pendingRange =
-                DateRange(
-                    LocalDate.parse(start),
-                    LocalDate.parse(savedInstanceState.getString("exportEnd")),
-                )
-        }
         setContent {
             val state by vm.state.collectAsState()
             val preferences = state?.preferences ?: Preferences()
@@ -148,10 +136,15 @@ class MainActivity : ComponentActivity() {
             else
                 FleurApp(
                     vm,
-                    onExport = ::export,
-                    onRestore = {
-                        restore.launch(
-                            arrayOf("application/json", "application/octet-stream", "text/plain"),
+                    onExport = { csv.launch("Fleur-transactions-${LocalDate.now()}.csv") },
+                    onImport = {
+                        importCsv.launch(
+                            arrayOf(
+                                "text/*",
+                                "application/csv",
+                                "application/vnd.ms-excel",
+                                "application/octet-stream",
+                            ),
                         )
                     },
                     onLock = { enabled ->
@@ -177,57 +170,54 @@ class MainActivity : ComponentActivity() {
                 ?.let { candidate ->
                     FleurTheme(preferences) {
                         FleurAlert(
-                            title = "Restore your budget?",
+                            title = "Import CSV?",
                             message =
-                                "This replaces the current budget with ${candidate.accounts.size} accounts and ${candidate.entries.size} transactions. A recovery copy of the current budget will be kept on this device.",
-                            onClose = { restoring = null },
-                            confirmLabel = "Restore",
+                                "${candidate.accounts.size} account${if (candidate.accounts.size == 1) "" else "s"} and ${candidate.entries.size} transaction${if (candidate.entries.size == 1) "" else "s"}. Balance through today: ${formatMoney(candidate.accounts.sumOf { candidate.accountBalance(it.id) }, candidate.preferences.copy(decimals = true))}.\n\nThis fresh import replaces your accounts, transactions and budgets. Settings are kept, and a recovery copy is saved. CSV rows become individual transactions; repeat descriptions remain in notes.",
+                            onClose = { if (!importing) restoring = null },
+                            confirmLabel = if (importing) "Importing..." else "Import",
                             onConfirm = {
-                                val candidateSafe =
-                                    candidate.copy(
-                                        preferences =
-                                            candidate.preferences.copy(
-                                                appLock =
-                                                    candidate.preferences.appLock &&
-                                                        getSystemService(
-                                                                KeyguardManager::class.java,
-                                                            )
-                                                            .isDeviceSecure,
-                                            ),
-                                    )
-                                lifecycleScope.launch {
-                                    try {
-                                        val before =
-                                            vm.state.value ?: error("Budget is still loading")
-                                        withContext(Dispatchers.IO) {
-                                            val file =
-                                                android.util.AtomicFile(
-                                                    java.io.File(
-                                                        filesDir,
-                                                        "before-restore.json",
-                                                    ),
-                                                )
-                                            val output = file.startWrite()
-                                            try {
-                                                output.write(
-                                                    StateCodec.encode(before).toByteArray(),
-                                                )
-                                                file.finishWrite(output)
-                                            } catch (e: Exception) {
-                                                file.failWrite(output)
-                                                throw e
+                                if (!importing) {
+                                    importing = true
+                                    lifecycleScope.launch {
+                                        try {
+                                            val before =
+                                                vm.state.value ?: error("Budget is still loading")
+                                            withContext(Dispatchers.IO) {
+                                                val file =
+                                                    android.util.AtomicFile(
+                                                        java.io.File(
+                                                            filesDir,
+                                                            "before-restore.json",
+                                                        ),
+                                                    )
+                                                val output = file.startWrite()
+                                                try {
+                                                    output.write(
+                                                        StateCodec.encode(before).toByteArray(),
+                                                    )
+                                                    file.finishWrite(output)
+                                                } catch (e: Exception) {
+                                                    file.failWrite(output)
+                                                    throw e
+                                                }
                                             }
+                                            vm.change(
+                                                onSuccess = {
+                                                    restoring = null
+                                                    importing = false
+                                                    message("CSV imported")
+                                                },
+                                                onFailure = { importing = false },
+                                            ) {
+                                                candidate.copy(
+                                                    preferences =
+                                                        candidate.preferences.copy(decimals = true),
+                                                )
+                                            }
+                                        } catch (e: Exception) {
+                                            importing = false
+                                            message(e.message ?: "Import failed")
                                         }
-                                        vm.change(
-                                            {
-                                                restoring = null
-                                                message("Backup restored")
-                                            },
-                                        ) {
-                                            candidateSafe
-                                        }
-                                    } catch (e: Exception) {
-                                        message(e.message ?: "Restore failed")
                                     }
                                 }
                             },
@@ -259,44 +249,23 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun export(type: String, range: DateRange) {
-        pendingRange = range
-        val stamp = LocalDate.now().toString()
-        when (type) {
-            "backup" -> backup.launch("Fleur-backup-$stamp.json")
-            "csv" -> csv.launch("Fleur-transactions-$stamp.csv")
-            "pdf" -> pdf.launch("Fleur-report-$stamp.pdf")
-        }
-    }
-
-    private fun writeExport(uri: android.net.Uri, type: String) {
+    private fun writeExport(uri: android.net.Uri) {
         val state = vm.state.value ?: return
         lifecycleScope.launch {
             try {
                 withContext(Dispatchers.IO) {
+                    val data =
+                        Exports.csv(state, DateRange(LocalDate.of(1900, 1, 1), LocalDate.now()))
+                            .toByteArray(Charsets.UTF_8)
                     contentResolver.openOutputStream(uri, "wt")?.use { output ->
-                        when (type) {
-                            "backup" ->
-                                output.write(StateCodec.encode(state).toByteArray(Charsets.UTF_8))
-                            "csv" ->
-                                output.write(
-                                    Exports.csv(state, pendingRange).toByteArray(Charsets.UTF_8),
-                                )
-                            "pdf" -> Exports.pdf(state, pendingRange, output)
-                        }
+                        output.write(data)
                     } ?: error("Unable to write the selected file")
                 }
-                message("${if(type=="backup") "Backup" else "Export"} saved")
+                message("CSV exported")
             } catch (e: Exception) {
                 message(e.message ?: "Export failed")
             }
         }
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        outState.putString("exportStart", pendingRange.start.toString())
-        outState.putString("exportEnd", pendingRange.end.toString())
-        super.onSaveInstanceState(outState)
     }
 
     override fun onPause() {

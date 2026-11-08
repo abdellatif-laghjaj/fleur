@@ -21,12 +21,12 @@ The target is a working Kotlin Android app in this project matching the seven su
 - [x] Accounts: spending/savings/debt, initial balances, goals/limits, transfers, balance adjustment, hide/unhide, reorder, safe delete.
 - [x] Categories: search/grid selection, custom name/icon/color/type, budgets, reorder and safe removal.
 - [x] Preferences: currency, dark/system mode, accent/theme, heading fonts/size, month start, week start, period frequency, default account, carryover, decimal display, paid toggle, haptics, budget/debt visibility.
-- [x] Backup/restore, CSV and PDF export through Android document picker; validate before replacing data.
+- [x] CSV-only export and fresh CSV import through Android document picker; validate every row, preview the result, and keep a private recovery copy before replacing data. Fleur and Cashew transaction snapshots are supported.
 - [x] Daily reminders, device-credential app lock and home-screen summary widget.
 - [x] Durable local storage; no monetization or analytics SDKs; no demo transactions inserted without the user's action.
 - [x] JVM tests for money, recurrence and accounting; instrumentation for persistence and UI workflows.
 - [x] Build APK, install on emulator, exercise workflows, inspect actual screenshots, and check crashes/layout/accessibility.
 
-Apple-only iCloud sync/sharing strings were bundled into the Android APK. They are not an Android service we can reproduce by connecting to the original developer's infrastructure. Android backup/restore and sharing exported files must work; no fake sync or sharing controls should be presented as working.
+Apple-only iCloud sync/sharing strings were bundled into the Android APK. They are not an Android service we can reproduce by connecting to the original developer's infrastructure. Android CSV import/export and sharing exported files must work; no fake sync or sharing controls should be presented as working.
 
 Implementation is complete for the local Android feature set above. Evidence and practical limits are recorded in `../qa/VERIFICATION.md`. Automated tests cover the principal editing, accounting, recurrence, storage and appearance workflows; platform integrations also receive manual emulator checks. This is a Kotlin rebuild using the recovered assets and screenshots, not the original unobfuscated source or a claim of pixel identity on every device.

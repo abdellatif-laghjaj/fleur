@@ -165,41 +165,6 @@ class BudgetPersistenceTest {
             val csv = Exports.csv(state, DateRange(entry.date, entry.date))
             assertTrue(csv.contains("\"-12.34\""))
             assertTrue(csv.contains("\"Coffee, \"\"cake\"\"\nand friends\""))
-            val output = java.io.ByteArrayOutputStream()
-            Exports.pdf(state, DateRange(entry.date, entry.date), output)
-            assertTrue(
-                output.toByteArray().take(4).toByteArray().contentEquals("%PDF".toByteArray()),
-            )
-            val longReport = java.io.File(context.cacheDir, "long-report-${newId()}.pdf")
-            try {
-                longReport.outputStream().use {
-                    Exports.pdf(
-                        state.copy(
-                            entries =
-                                listOf(
-                                    entry.copy(
-                                        notes =
-                                            "A complete note that must wrap across pages. "
-                                                .repeat(200),
-                                    ),
-                                ),
-                        ),
-                        DateRange(entry.date, entry.date),
-                        it,
-                    )
-                }
-                android.os.ParcelFileDescriptor.open(
-                        longReport,
-                        android.os.ParcelFileDescriptor.MODE_READ_ONLY,
-                    )
-                    .use { descriptor ->
-                        android.graphics.pdf.PdfRenderer(descriptor).use { renderer ->
-                            assertTrue(renderer.pageCount > 1)
-                        }
-                    }
-            } finally {
-                longReport.delete()
-            }
         } finally {
             context.deleteDatabase(name)
         }

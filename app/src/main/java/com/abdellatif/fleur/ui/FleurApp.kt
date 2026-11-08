@@ -32,8 +32,8 @@ import kotlinx.coroutines.withContext
 @Composable
 fun FleurApp(
     vm: BudgetViewModel,
-    onExport: (String, DateRange) -> Unit,
-    onRestore: () -> Unit,
+    onExport: () -> Unit,
+    onImport: () -> Unit,
     onLock: (Boolean) -> Unit,
     onReminders: (Boolean) -> Unit,
 ) {
@@ -58,7 +58,7 @@ fun FleurApp(
                     TextButton(onClick = vm::load) { Text("Try again") }
                 }
             }
-        } else BudgetContent(state!!, vm, onExport, onRestore, onLock, onReminders)
+        } else BudgetContent(state!!, vm, onExport, onImport, onLock, onReminders)
     }
 }
 
@@ -66,8 +66,8 @@ fun FleurApp(
 private fun BudgetContent(
     state: BudgetState,
     vm: BudgetViewModel,
-    onExport: (String, DateRange) -> Unit,
-    onRestore: () -> Unit,
+    onExport: () -> Unit,
+    onImport: () -> Unit,
     onLock: (Boolean) -> Unit,
     onReminders: (Boolean) -> Unit,
 ) {
@@ -347,6 +347,7 @@ private fun BudgetContent(
                             0 ->
                                 HomeScreen(
                                     state,
+                                    range,
                                     accountFilters.toSet(),
                                     screenData.occurrences,
                                     screenData.carryOver,
@@ -361,7 +362,7 @@ private fun BudgetContent(
                                     range,
                                     accountFilters.toSet(),
                                     screenData.occurrences,
-                                    ::category,
+                                    ::edit,
                                 )
                             2 ->
                                 TransactionsScreen(
@@ -462,8 +463,8 @@ private fun BudgetContent(
                 { open("budget") },
                 { open("categories") },
                 { open("repeating") },
-                { onExport(it, range) },
-                onRestore,
+                onExport,
+                onImport,
                 onLock,
                 onReminders,
             )

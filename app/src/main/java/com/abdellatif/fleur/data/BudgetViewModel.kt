@@ -40,7 +40,11 @@ constructor(application: Application, databaseName: String = "fleur-personal.db"
         }
     }
 
-    fun change(onSuccess: () -> Unit = {}, transform: (BudgetState) -> BudgetState) {
+    fun change(
+        onSuccess: () -> Unit = {},
+        onFailure: () -> Unit = {},
+        transform: (BudgetState) -> BudgetState,
+    ) {
         viewModelScope.launch {
             try {
                 mutex.withLock {
@@ -54,6 +58,7 @@ constructor(application: Application, databaseName: String = "fleur-personal.db"
                 }
                 onSuccess()
             } catch (e: Exception) {
+                onFailure()
                 mutableErrors.emit(e.message ?: "Unable to save your changes")
             }
         }

@@ -31,8 +31,8 @@ fun SettingsScreen(
     onBudget: () -> Unit,
     onCategories: () -> Unit,
     onRepeating: () -> Unit,
-    onExport: (String) -> Unit,
-    onRestore: () -> Unit,
+    onExport: () -> Unit,
+    onImport: () -> Unit,
     onLock: (Boolean) -> Unit,
     onReminders: (Boolean) -> Unit,
 ) {
@@ -75,7 +75,11 @@ fun SettingsScreen(
             FormRow(
                 "Carry Over",
                 trailing = {
-                    Switch(p.carryOver, { vm.preferences { v -> v.copy(carryOver = it) } })
+                    FleurSwitch(
+                        p.carryOver,
+                        { vm.preferences { v -> v.copy(carryOver = it) } },
+                        "Carry Over",
+                    )
                 },
             )
             Text(
@@ -87,13 +91,21 @@ fun SettingsScreen(
             FormRow(
                 "Enable Decimal",
                 trailing = {
-                    Switch(p.decimals, { vm.preferences { v -> v.copy(decimals = it) } })
+                    FleurSwitch(
+                        p.decimals,
+                        { vm.preferences { v -> v.copy(decimals = it) } },
+                        "Enable Decimal",
+                    )
                 },
             )
             FormRow(
                 "Enable Paid / Not Paid",
                 trailing = {
-                    Switch(p.showPaid, { vm.preferences { v -> v.copy(showPaid = it) } })
+                    FleurSwitch(
+                        p.showPaid,
+                        { vm.preferences { v -> v.copy(showPaid = it) } },
+                        "Enable Paid / Not Paid",
+                    )
                 },
             )
             if (p.showPaid)
@@ -117,13 +129,21 @@ fun SettingsScreen(
             FormRow(
                 "Show Overall Budget Bar",
                 trailing = {
-                    Switch(p.showBudget, { vm.preferences { v -> v.copy(showBudget = it) } })
+                    FleurSwitch(
+                        p.showBudget,
+                        { vm.preferences { v -> v.copy(showBudget = it) } },
+                        "Show Overall Budget Bar",
+                    )
                 },
             )
             FormRow(
                 "Show Debt Bar",
                 trailing = {
-                    Switch(p.showDebt, { vm.preferences { v -> v.copy(showDebt = it) } })
+                    FleurSwitch(
+                        p.showDebt,
+                        { vm.preferences { v -> v.copy(showDebt = it) } },
+                        "Show Debt Bar",
+                    )
                 },
             )
             FormRow("Budget mode", if (p.budgetRemaining) "Remaining" else "Spent") {
@@ -131,10 +151,19 @@ fun SettingsScreen(
             }
             FormRow(
                 "Haptic Feedback",
-                trailing = { Switch(p.haptics, { vm.preferences { v -> v.copy(haptics = it) } }) },
+                trailing = {
+                    FleurSwitch(
+                        p.haptics,
+                        { vm.preferences { v -> v.copy(haptics = it) } },
+                        "Haptic Feedback",
+                    )
+                },
             )
             SectionLabel("REMINDERS & SECURITY")
-            FormRow("Daily reminder", trailing = { Switch(p.reminders, onReminders) })
+            FormRow(
+                "Daily reminder",
+                trailing = { FleurSwitch(p.reminders, onReminders, "Daily reminder") },
+            )
             FormRow(
                 "Reminder time",
                 String.format(Locale.US, "%02d:%02d", p.reminderHour, p.reminderMinute),
@@ -150,12 +179,17 @@ fun SettingsScreen(
                     )
                     .show()
             }
-            FormRow("App Lock", trailing = { Switch(p.appLock, onLock) })
-            SectionLabel("BACKUP & EXPORT")
-            FormRow("Create backup", "JSON", onClick = { onExport("backup") })
-            FormRow("Restore backup", "", onClick = onRestore)
-            FormRow("Export transactions", "CSV", onClick = { onExport("csv") })
-            FormRow("Export report", "PDF", onClick = { onExport("pdf") })
+            FormRow("App Lock", trailing = { FleurSwitch(p.appLock, onLock, "App Lock") })
+            SectionLabel("IMPORT & EXPORT")
+            FormRow("Export CSV", "All history", onClick = onExport)
+            FormRow("Import CSV", "Fleur / Cashew", onClick = onImport)
+            Text(
+                "Export includes history through today and opening balances. CSV imports replace your budget with individual transactions; repeating details stay in notes.",
+                fontSize = 11.sp,
+                lineHeight = 18.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = .65f),
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 12.dp),
+            )
             val hidden = state.accounts.filter { it.hidden }
             if (hidden.isNotEmpty()) {
                 SectionLabel("HIDDEN ACCOUNTS")
@@ -175,7 +209,7 @@ fun SettingsScreen(
             SectionLabel("HELP")
             FormRow("How to use Fleur", "Guide") { picker = "help" }
             Text(
-                "Fleur Personal · 1.0\nYour budget is stored on this device. All features are available.",
+                "Fleur Personal · 1.4\nYour budget is stored on this device. All features are available.",
                 fontSize = 11.sp,
                 color = MaterialTheme.colorScheme.outline,
                 modifier = Modifier.padding(top = 26.dp, bottom = 36.dp),
@@ -655,7 +689,7 @@ fun HelpScreen(onClose: () -> Unit) {
             "Carry Over" to
                 "Enable Carry Over to include the balances from before the selected period in the summary. Transfers within selected accounts cancel out. Debt-account activity is shown separately.",
             "Your data" to
-                "Changes save locally. Use Create backup to save a complete JSON backup. Restore validates the entire file before replacing your budget. CSV and PDF exports contain transactions in your selected date range.",
+                "Changes save locally. Use Export CSV to save transaction history through today and opening balances. Import CSV accepts Fleur and Cashew files, validates every row and shows a preview before replacing your budget. CSV rows import as individual transactions. Repeating descriptions stay in notes; budget limits and future repeat rules are not restored.",
             "Hide or delete" to
                 "Hidden accounts retain their history. Deleting an account also deletes its transactions and transfers. A category with transaction history cannot be deleted until those entries are moved to another category.",
             "Privacy" to

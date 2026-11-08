@@ -8,6 +8,83 @@ import org.junit.Test
 
 class BudgetLogicTest {
     @Test
+    fun forecastSeparatesRecordedFromFutureAndUsesScheduledExpensesAsFloor() {
+        val start = LocalDate.of(2026, 11, 1)
+        val range = DateRange(start, start.plusDays(29))
+        fun row(day: Long, amount: Long) =
+            Occurrence(
+                Entry(
+                    type = EntryType.EXPENSE,
+                    amount = amount,
+                    accountId = "default",
+                    date = start.plusDays(day),
+                ),
+                start.plusDays(day),
+            )
+        val rows = listOf(row(0, 1000), row(19, 50000))
+        val forecast = budgetForecast(rows, range, start.plusDays(9))
+        assertEquals(1000L, forecast.spent)
+        assertEquals(51000L, forecast.expected)
+        assertEquals(10L, forecast.elapsedDays)
+        val pace = budgetForecast(listOf(row(0, 1000)), range, start.plusDays(9))
+        assertEquals(3000L, pace.expected)
+        val ended = budgetForecast(rows, range, range.end.plusDays(3))
+        assertEquals(51000L, ended.spent)
+        assertEquals(ended.spent, ended.expected)
+        val future = budgetForecast(rows, range, start.minusDays(1))
+        assertEquals(0L, future.spent)
+        assertEquals(51000L, future.expected)
+        assertNull(future.observedThrough)
+    }
+
+    @Test
+    fun forecastHandlesEmptyOneDayAndLeapMonthRanges() {
+        val day = LocalDate.of(2028, 2, 1)
+        assertEquals(0L, budgetForecast(emptyList(), DateRange(day, day), day).expected)
+        val row =
+            Occurrence(
+                Entry(
+                    type = EntryType.EXPENSE,
+                    amount = 100,
+                    accountId = "default",
+                    date = day,
+                ),
+                day,
+            )
+        assertEquals(
+            2900L,
+            budgetForecast(listOf(row), DateRange(day, day.plusDays(28)), day).expected,
+        )
+        assertEquals(100L, budgetForecast(listOf(row), DateRange(day, day), day).expected)
+    }
+
+    @Test
+    fun dailyBinsCoverEachDayExactlyOnceAndPreserveLongRangeTotals() {
+        val start = LocalDate.of(2026, 1, 1)
+        val rows =
+            (0L..364L).map { offset ->
+                val date = start.plusDays(offset)
+                Occurrence(
+                    Entry(
+                        type = EntryType.EXPENSE,
+                        amount = 100,
+                        accountId = "default",
+                        date = date,
+                    ),
+                    date,
+                )
+            }
+        val bins = spendingBins(rows, DateRange(start, start.plusDays(364)))
+        assertEquals(60, bins.size)
+        assertEquals(36500L, bins.sumOf { it.amount })
+        assertEquals(start, bins.first().start)
+        assertEquals(start.plusDays(364), bins.last().end)
+        bins.zipWithNext().forEach { (a, b) -> assertEquals(a.end.plusDays(1), b.start) }
+        assertTrue(bins.maxOf { it.amount } > 100)
+        assertEquals(listOf(100L), spendingBins(rows, DateRange(start, start)).map { it.amount })
+    }
+
+    @Test
     fun reorderingChangesOrderWithoutChangingIdentityOrAmounts() {
         val state =
             initialState()

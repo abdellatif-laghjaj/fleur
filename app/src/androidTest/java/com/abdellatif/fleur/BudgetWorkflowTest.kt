@@ -2,6 +2,7 @@ package com.abdellatif.fleur
 
 import android.app.Application
 import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -34,7 +35,7 @@ class BudgetWorkflowTest {
             vm = BudgetViewModel(application, dbName)
             store.put("test", vm)
         }
-        compose.setContent { FleurApp(vm, { _, _ -> }, {}, {}, {}) }
+        compose.setContent { FleurApp(vm, {}, {}, {}, {}) }
         compose.waitUntil(10000) { vm.state.value != null }
     }
 
@@ -432,7 +433,138 @@ class BudgetWorkflowTest {
         compose.waitUntil(10000) { vm.state.value!!.entries.isEmpty() }
     }
 
-    private fun screenshot(name: String) {
+    @Test
+    fun insightsExpandInlineAndBudgetOutlookCollapsesInBothThemes() {
+        fun capture(name: String, appRoot: SemanticsMatcher = isRoot()) = screenshot(name, appRoot)
+        val today = LocalDate.now()
+        compose.runOnIdle {
+            vm.change { seed ->
+                seed.copy(
+                    preferences = seed.preferences.copy(darkMode = "Dark"),
+                    budgets = listOf(Budget("category-1", 50000)),
+                    entries =
+                        listOf(
+                            Entry(
+                                id = "paycheck",
+                                type = EntryType.INCOME,
+                                amount = 50000,
+                                categoryId = "category-0",
+                                accountId = "default",
+                                date = today,
+                                notes = "Paycheck",
+                            ),
+                            Entry(
+                                id = "market",
+                                type = EntryType.EXPENSE,
+                                amount = 2300,
+                                categoryId = "category-1",
+                                accountId = "default",
+                                date = today,
+                                notes = "Fresh market",
+                            ),
+                            Entry(
+                                id = "lunch",
+                                type = EntryType.EXPENSE,
+                                amount = 1500,
+                                categoryId = "category-1",
+                                accountId = "default",
+                                date = today,
+                                notes = "Lunch",
+                            ),
+                            Entry(
+                                id = "rent",
+                                type = EntryType.EXPENSE,
+                                amount = 10000,
+                                categoryId = "category-3",
+                                accountId = "default",
+                                date = today,
+                                notes = "Apartment",
+                            ),
+                        ),
+                )
+            }
+        }
+        compose.onNodeWithContentDescription("Insights").performClick()
+        compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Food & Drinks"))
+        compose.onNodeWithText("Food & Drinks").performClick()
+        compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Fresh market"))
+        compose.onNodeWithText("Fresh market").assertIsDisplayed()
+        compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Lunch"))
+        compose.waitForIdle()
+        compose.onNodeWithText("Lunch").assertIsDisplayed()
+        compose.onNodeWithText("Apartment").assertDoesNotExist()
+        compose.onNode(hasScrollToIndexAction()).performScrollToIndex(3)
+        capture("23-insights-expanded-dark.png")
+        compose.onNodeWithText("Fresh market").performClick()
+        compose.onNodeWithContentDescription("Amount").assertExists()
+        compose.onNodeWithContentDescription("Close").performClick()
+        compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Food & Drinks"))
+        compose.onNodeWithText("Food & Drinks").performClick()
+        compose.onNodeWithText("Fresh market").assertDoesNotExist()
+        compose.waitForIdle()
+        compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Daily average"))
+        capture("24-daily-spending-dark.png")
+        compose.onNode(hasScrollToIndexAction()).performScrollToIndex(0)
+        compose.onNodeWithText("INCOME").performClick()
+        compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Salary"))
+        compose.onNodeWithText("Salary").performClick()
+        compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Paycheck"))
+        compose.onNodeWithText("Paycheck").assertIsDisplayed()
+        compose.onNodeWithText("Lunch").assertDoesNotExist()
+        capture("31-insights-income-dark.png")
+        compose.onNodeWithText("Salary").performScrollTo().performClick()
+        compose.onNodeWithText("Paycheck").assertDoesNotExist()
+        compose.onNodeWithContentDescription("Home").performClick()
+        for (mode in listOf("Dark", "Light")) {
+            compose.runOnIdle { vm.preferences { it.copy(darkMode = mode) } }
+            compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Food & Drinks"))
+            compose.onNodeWithText("Food & Drinks").performSemanticsAction(
+                SemanticsActions.OnClick,
+            ) {
+                it()
+            }
+            compose.waitForIdle()
+            compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Budget outlook"))
+            compose.onNodeWithText("Budget outlook").assertIsDisplayed()
+            compose
+                .onNode(hasScrollToIndexAction())
+                .performScrollToNode(hasText("View transactions"))
+            compose.onNodeWithText("View transactions").assertIsDisplayed()
+            compose.onNode(hasScrollToIndexAction()).performTouchInput { swipeUp() }
+            capture(
+                if (mode == "Dark") "25-budget-outlook-dark.png" else "26-budget-outlook-light.png",
+            )
+            compose.onNode(hasScrollToIndexAction()).performScrollToNode(hasText("Food & Drinks"))
+            compose.onNodeWithText("Food & Drinks").performSemanticsAction(
+                SemanticsActions.OnClick,
+            ) {
+                it()
+            }
+            compose.waitForIdle()
+            compose.onNodeWithText("Budget outlook").assertDoesNotExist()
+        }
+        compose.onNodeWithContentDescription("Open settings").performClick()
+        compose.onNodeWithText("Enable Paid / Not Paid").performScrollTo()
+        screenshot("27-settings-switches-light.png")
+        compose.runOnIdle { vm.preferences { it.copy(darkMode = "Dark") } }
+        val carry = compose.onNodeWithContentDescription("Carry Over")
+        carry.assertIsOff().performClick().assertIsOn()
+        compose.waitUntil(10000) { vm.state.value!!.preferences.carryOver }
+        screenshot("28-settings-switches-dark.png")
+    }
+
+    @Test
+    fun settingsOfferCsvImportAndExportWithoutLegacyBackupOrPdf() {
+        compose.onNodeWithContentDescription("Open settings").performClick()
+        compose.onNodeWithText("Import CSV").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Export CSV").assertIsDisplayed()
+        compose.onNodeWithText("Create backup").assertDoesNotExist()
+        compose.onNodeWithText("Restore backup").assertDoesNotExist()
+        compose.onNodeWithText("Export report").assertDoesNotExist()
+        screenshot("29-csv-settings.png")
+    }
+
+    private fun screenshot(name: String, appRoot: SemanticsMatcher? = null) {
         compose.waitForIdle()
         val folder =
             InstrumentationRegistry.getArguments().getString("additionalTestOutputDir")?.let {
@@ -442,10 +574,10 @@ class BudgetWorkflowTest {
         InstrumentationRegistry.getInstrumentation().waitForIdleSync()
         android.os.SystemClock.sleep(200)
         java.io.File(folder, name).outputStream().use {
-            InstrumentationRegistry.getInstrumentation()
-                .uiAutomation
-                .takeScreenshot()
-                .compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it)
+            val bitmap =
+                if (appRoot != null) compose.onNode(appRoot).captureToImage().asAndroidBitmap()
+                else InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
+            bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it)
         }
     }
 
